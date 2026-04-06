@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "1044636300358",
+    "project_id": "etribunals",
+    "storage_bucket": "etribunals.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:1044636300358:android:703387b5c1b82750e2c647",
+        "android_client_info": {
+          "package_name": "com.zrh.etribunals.etribunals"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyAmhVxYtpAT142M-wgtDEUZskooMahS0FQ"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
