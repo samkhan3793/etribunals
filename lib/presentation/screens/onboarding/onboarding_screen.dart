@@ -77,7 +77,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                         const SizedBox(height: 40),
                         customText(data['title']!, size: 24, weight: FontWeight.bold, align: TextAlign.center),
                         const SizedBox(height: 20),
-                        customText(data['desc']!, size: 16, color: Colors.white70, align: TextAlign.center),
+                        customText(data['desc']!, size: 16, color: Colors.black54, align: TextAlign.center),
                       ],
                     ),
                   );
@@ -98,7 +98,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                         width: _currentIndex == index ? 24 : 10,
                         height: 10,
                         decoration: BoxDecoration(
-                          color: _currentIndex == index ? Colors.white : Colors.white24,
+                          color: _currentIndex == index ? Colors.black : Colors.black26,
                           borderRadius: BorderRadius.circular(12),
                         ),
                       ),

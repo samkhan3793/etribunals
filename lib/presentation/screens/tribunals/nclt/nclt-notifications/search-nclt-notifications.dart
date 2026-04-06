@@ -6,6 +6,8 @@ import 'package:url_launcher/url_launcher.dart';
 import 'package:etribunals/core/constants/app_colors.dart';
 
 class SearchNcltNotificationsScreen extends StatefulWidget {
+  const SearchNcltNotificationsScreen({super.key});
+
   @override
   _SearchNcltNotificationsScreenState createState() => _SearchNcltNotificationsScreenState();
 }
@@ -22,7 +24,7 @@ class _SearchNcltNotificationsScreenState extends State<SearchNcltNotificationsS
   String? captchaToken;
   
 
-  List<Map<String, String>> _tableData = [];
+  final List<Map<String, String>> _tableData = [];
   bool _isLoading = false;
 
   @override
@@ -193,7 +195,7 @@ class _SearchNcltNotificationsScreenState extends State<SearchNcltNotificationsS
                       if (_tableData.isNotEmpty) ...[
                         const Text("Results", style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
                         const SizedBox(height: 10),
-                        ..._tableData.map((data) => _buildCard(data)).toList(),
+                        ..._tableData.map((data) => _buildCard(data)),
                       ],
                     ],
                   ),
@@ -251,7 +253,7 @@ class _SearchNcltNotificationsScreenState extends State<SearchNcltNotificationsS
       ? InkWell(
           onTap: () async {
             final uri = Uri.parse("https://nclt.gov.in${entry.value}");
-            print("Opening URL: $uri");
+            // debugPrint("Opening URL: $uri");
             await launchUrl(uri, mode: LaunchMode.externalApplication);
           },
           child: const Text(

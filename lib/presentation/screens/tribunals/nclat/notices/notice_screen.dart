@@ -18,8 +18,8 @@ class _NoticeScreenState extends State<NoticeScreen> {
   bool _isLoading = false;
   String? _error;
   
-  DateTime _startDate = DateTime.now();
-  DateTime _endDate = DateTime.now().add(const Duration(days: 7)); // Default end date
+  final DateTime _startDate = DateTime.now();
+  final DateTime _endDate = DateTime.now().add(const Duration(days: 7)); // Default end date
   String _formattedStartDate = '';
   String _formattedEndDate = '';
 
@@ -171,7 +171,7 @@ class _NoticeScreenState extends State<NoticeScreen> {
   Widget _buildDownloadWidget(Map<String, dynamic> valueMap) {
     final label = valueMap['label'] ?? 'Download';
     final relativeUrl = valueMap['url'];
-    print('Relative URL: $relativeUrl');
+  // debugPrint('Relative URL: $relativeUrl');
     if (relativeUrl != null && relativeUrl.toString().endsWith('.pdf')) {
       final fullUrl = 'https://nclat.nic.in$relativeUrl';
       return InkWell(

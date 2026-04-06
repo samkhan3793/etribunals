@@ -17,8 +17,8 @@ class MyApp extends StatelessWidget {
     return MaterialApp(
       title: 'eTribunals Case Tracker',
       debugShowCheckedModeBanner: false,
-      theme: AppTheme.darkTheme,
-      initialRoute: '/splash', // 👈 Start with splash screen
+      theme: AppTheme.lightTheme,
+      initialRoute: '/splash',
       onGenerateRoute: AppRouter.generateRoute,
     );
   }

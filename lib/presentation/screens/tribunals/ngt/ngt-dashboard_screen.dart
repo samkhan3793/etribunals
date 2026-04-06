@@ -9,6 +9,8 @@ class NGTDasboardScreen extends StatelessWidget {
     {'title': 'Judgement/Orders', 'route': '/ngt/order-judgement', 'icon': Icons.description},
   ];
 
+  NGTDasboardScreen({super.key});
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(

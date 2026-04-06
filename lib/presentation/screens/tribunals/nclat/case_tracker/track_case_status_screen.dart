@@ -51,7 +51,7 @@ class _TrackCaseStatusScreenState extends State<TrackCaseStatusScreen> {
         _captchaImageBytes = Uint8List.fromList(response.data);
       });
     } catch (e) {
-      print('Error loading CAPTCHA: $e');
+  // debugPrint('Error loading CAPTCHA: $e');
     }
   }
 
@@ -143,7 +143,7 @@ class _TrackCaseStatusScreenState extends State<TrackCaseStatusScreen> {
         }
       }
     } catch (e) {
-      print('Error fetching suggestions: $e');
+  // debugPrint('Error fetching suggestions: $e');
     }
   }
 
@@ -293,7 +293,7 @@ class _TrackCaseStatusScreenState extends State<TrackCaseStatusScreen> {
             return _textInput(controller, 'Advocate Name', focusNode: focusNode, onEditingComplete: onEditingComplete);
           },
           onSelected: (String selection) {
-            print('Selected: $selection');
+            // debugPrint('Selected: $selection');
           },
         ),
         const SizedBox(height: 16),

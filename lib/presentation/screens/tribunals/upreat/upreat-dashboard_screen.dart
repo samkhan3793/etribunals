@@ -9,6 +9,8 @@ class UPREATDasboardScreen extends StatelessWidget {
     {'title': 'Judgement/Orders', 'route': '/upreat/order-judgement', 'icon': Icons.description},
   ];
 
+  UPREATDasboardScreen({super.key});
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(

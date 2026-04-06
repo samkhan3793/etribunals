@@ -17,8 +17,8 @@ class _ViewCauseListScreenState extends State<ViewCauseListScreen> {
   bool _isLoading = true;
   String? _error;
 
-  DateTime _startDate = DateTime.now();
-  DateTime _endDate = DateTime.now().add(const Duration(days: 7)); // Default end date
+  final DateTime _startDate = DateTime.now();
+  final DateTime _endDate = DateTime.now().add(const Duration(days: 7)); // Default end date
 
   String _formattedStartDate = '';
   String _formattedEndDate = '';

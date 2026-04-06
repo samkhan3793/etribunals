@@ -129,7 +129,7 @@ class _CauseListDetailScreenState extends State<CauseListDetailScreen> {
     children: [
       if (_tribunalInfo != null) _buildTribunalInfoCard(),
       const SizedBox(height: 16),
-      ..._causeListDetails.where((row) => _isValidSerialNumber(row)).map((row) => _buildDetailCard(row)).toList(),
+      ..._causeListDetails.where((row) => _isValidSerialNumber(row)).map((row) => _buildDetailCard(row)),
     ],
   );
 }

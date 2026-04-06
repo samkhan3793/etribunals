@@ -6,6 +6,8 @@ import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 
 class SearchUpreatCaseStatusScreen extends StatefulWidget {
+  const SearchUpreatCaseStatusScreen({super.key});
+
   @override
   _SearchUpreatCaseStatusScreenState createState() =>
       _SearchUpreatCaseStatusScreenState();

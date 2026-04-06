@@ -7,7 +7,7 @@ import 'package:etribunals/core/constants/app_colors.dart';
 class OrderSearchResultScreen extends StatelessWidget {
   final String responseData;
 
-  OrderSearchResultScreen({required this.responseData});
+  const OrderSearchResultScreen({super.key, required this.responseData});
 
   @override
   Widget build(BuildContext context) {

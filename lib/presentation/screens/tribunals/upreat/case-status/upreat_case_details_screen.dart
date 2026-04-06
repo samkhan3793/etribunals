@@ -1,4 +1,3 @@
-import 'package:etribunals/core/constants/app_colors.dart';
 import 'package:flutter/material.dart';
 import 'package:url_launcher/url_launcher.dart';
 
@@ -20,11 +19,15 @@ class UpreatCaseDetailsScreen extends StatelessWidget {
     final List<dynamic> caseProceedingList = upreatCaseDetails["allproceedingdtls"] ?? [];
 
     return Scaffold(
-      appBar: AppBar(title: const Text("Full Case Details"),
-        backgroundColor: AppColors.primary,
+      appBar: AppBar(
+        title: const Text("Full Case Details"),
+        backgroundColor: Colors.white,
         centerTitle: true,
+        iconTheme: const IconThemeData(color: Colors.black),
+        titleTextStyle: const TextStyle(color: Colors.black, fontWeight: FontWeight.bold, fontSize: 20),
+        elevation: 1,
       ),
-      backgroundColor: AppColors.secondary,
+      backgroundColor: Colors.white,
       body: SingleChildScrollView(
         child: Padding(
           padding: const EdgeInsets.all(16.0),
@@ -33,7 +36,7 @@ class UpreatCaseDetailsScreen extends StatelessWidget {
             children: [
               _buildAccordionContainer(_buildMainCaseAccordion(caseData,allproceedingdtlsData)),
               const SizedBox(height: 15),
-             _buildAccordionContainer( _buildCurrentCaseDetailsAccordion(finalStatusData, allproceedingdtlsData)),
+              _buildAccordionContainer(_buildCurrentCaseDetailsAccordion(finalStatusData, allproceedingdtlsData)),
               const SizedBox(height: 15),
               _buildAccordionContainer(_buildPartyDetailsAccordion(caseData, partyList)),
               const SizedBox(height: 15),
@@ -49,9 +52,9 @@ class UpreatCaseDetailsScreen extends StatelessWidget {
 
   Widget _buildMainCaseAccordion(Map<String, dynamic> caseData, Map<String, dynamic> allproceedingdtlsData ) {
     return ExpansionTile(
-      initiallyExpanded: true, // Open by default
-      title: const Text("Case Details", style: TextStyle(fontWeight: FontWeight.bold)),
-      backgroundColor: AppColors.accent,
+      initiallyExpanded: true,
+      title: const Text("Case Details", style: TextStyle(fontWeight: FontWeight.bold, color: Colors.black)),
+      backgroundColor: Colors.white,
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
       children: [
         Card(
@@ -83,10 +86,9 @@ class UpreatCaseDetailsScreen extends StatelessWidget {
 
   Widget _buildCurrentCaseDetailsAccordion(Map<String, dynamic> finalStatusData, Map<String, dynamic> allproceedingdtlsData ) {
     return ExpansionTile(
-      // This accordion is initially expanded to show the current case details
-      initiallyExpanded: false, // Open by default
-      title: const Text("Current Case Details", style: TextStyle(fontWeight: FontWeight.bold)),
-      backgroundColor: AppColors.accent,
+      initiallyExpanded: false,
+      title: const Text("Current Case Details", style: TextStyle(fontWeight: FontWeight.bold, color: Colors.black)),
+      backgroundColor: Colors.white,
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
       children: [
         Card(
@@ -122,8 +124,6 @@ class UpreatCaseDetailsScreen extends StatelessWidget {
                 _buildDetailRow("Bench Natire", finalStatusData["bench_nature_descr"] ?? "N/A"),
                 _buildDetailRow("First Listing Date", finalStatusData["listing_date"] ?? "N/A"),
                 _buildDetailRow("Case Stage", finalStatusData["current_status"] ?? "N/A"),
-
-
               ],
             ),
           ),
@@ -135,13 +135,12 @@ class UpreatCaseDetailsScreen extends StatelessWidget {
 Widget _buildPartyDetailsAccordion(Map<String, dynamic> caseData, List<dynamic> partyList) {
   return ExpansionTile(
     initiallyExpanded: false,
-    title: const Text("Party Details", style: TextStyle(fontWeight: FontWeight.bold)),
-    backgroundColor: AppColors.accent,
+    title: const Text("Party Details", style: TextStyle(fontWeight: FontWeight.bold, color: Colors.black)),
+    backgroundColor: Colors.white,
     shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
     children: partyList.asMap().entries.map((entry) {
-      int index = entry.key + 1; // Start numbering from 1
+      int index = entry.key + 1;
       Map<String, dynamic> party = entry.value;
-
       return Card(
         elevation: 5,
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
@@ -168,13 +167,12 @@ Widget _buildPartyDetailsAccordion(Map<String, dynamic> caseData, List<dynamic> 
 Widget _buildApplicationDetailsAccordion(Map<String, dynamic> caseData, List<dynamic> applicationList) {
   return ExpansionTile(
     initiallyExpanded: false,
-    title: const Text("Application Details", style: TextStyle(fontWeight: FontWeight.bold)),
-    backgroundColor: AppColors.accent,
+    title: const Text("Application Details", style: TextStyle(fontWeight: FontWeight.bold, color: Colors.black)),
+    backgroundColor: Colors.white,
     shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
     children: applicationList.asMap().entries.map((entry) {
-      int index = entry.key + 1; // Start numbering from 1
+      int index = entry.key + 1;
       Map<String, dynamic> party = entry.value;
-
       return Card(
         elevation: 5,
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
@@ -187,16 +185,16 @@ Widget _buildApplicationDetailsAccordion(Map<String, dynamic> caseData, List<dyn
               _buildDetailRow("Sr. No.", index.toString()),
               _buildDetailRow("Filing No", party["filing_no"] ?? "N/A"),
               _buildDetailRow("Case Type", party["case_type_desc_cis"] ?? "N/A"),
-                            _buildDetailRow(
-                  "Case Title",
-                  party["case_title1"] != null && party["case_title2"] != null
-                      ? "${party["case_title1"]} Vs ${party["case_title2"]}"
-                      : "N/A",
-                ),
+              _buildDetailRow(
+                "Case Title",
+                party["case_title1"] != null && party["case_title2"] != null
+                    ? "${party["case_title1"]} Vs ${party["case_title2"]}"
+                    : "N/A",
+              ),
               _buildDetailRow("Bench Location / Court No.",
                 "${party["bench_location_name"] ?? "N/A"} / ${party["court_no"] ?? "N/A"}"
-                ),
-                _buildDetailRow("Application No", party["case_no"] ?? "N/A"),
+              ),
+              _buildDetailRow("Application No", party["case_no"] ?? "N/A"),
               _buildDetailRow("Filing / Registration Date",
                 "${party["date_of_filing"] ?? "N/A"} / ${party["regis_date"] ?? "N/A"}"
               ),
@@ -219,13 +217,12 @@ Widget _buildApplicationDetailsAccordion(Map<String, dynamic> caseData, List<dyn
 Widget _buildCaseProceedingDetailsAccordion(Map<String, dynamic> caseData, List<dynamic> caseProceedingList) {
   return ExpansionTile(
     initiallyExpanded: false,
-    title: const Text("Case Proceeding Details", style: TextStyle(fontWeight: FontWeight.bold)),
-    backgroundColor: AppColors.accent,
+    title: const Text("Case Proceeding Details", style: TextStyle(fontWeight: FontWeight.bold, color: Colors.black)),
+    backgroundColor: Colors.white,
     shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
     children: caseProceedingList.asMap().entries.map((entry) {
-      int index = entry.key + 1; // Start numbering from 1
+      int index = entry.key + 1;
       Map<String, dynamic> party = entry.value;
-
       return Card(
         elevation: 5,
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
@@ -238,7 +235,7 @@ Widget _buildCaseProceedingDetailsAccordion(Map<String, dynamic> caseData, List<
               _buildDetailRow("Sr. No.", index.toString()),
               _buildDetailRow("Bench Location / Court No.",
                 "${party["bench_location_name"] ?? "N/A"} / ${party["court_no"] ?? "N/A"}"
-                ),
+              ),
               _buildDetailRow("Listing Date", party["listing_date"] ?? "N/A"),
               _buildDetailRow("Listing Purpose", party["purpose"] ?? "N/A"),
               _buildDetailRow("Action Taken", party["today_action"] ?? "N/A"),
@@ -266,7 +263,7 @@ Widget _buildCaseProceedingDetailsAccordion(Map<String, dynamic> caseData, List<
         children: [
           Expanded(
             flex: 2,
-            child: Text(title, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16,color: Colors.black87)),
+            child: Text(title, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16, color: Colors.black)),
           ),
           Expanded(
             flex: 3,
@@ -274,7 +271,7 @@ Widget _buildCaseProceedingDetailsAccordion(Map<String, dynamic> caseData, List<
               value,
               maxLines: 2,
               overflow: TextOverflow.ellipsis,
-              style: const TextStyle(fontSize: 16, color: AppColors.secondary),
+              style: const TextStyle(fontSize: 16, color: Colors.black87),
             ),
           ),
         ],
@@ -282,8 +279,7 @@ Widget _buildCaseProceedingDetailsAccordion(Map<String, dynamic> caseData, List<
     );
   }
   Widget _buildStatusRow(String title, String? value) {
-  bool isYes = value != 'NO'; // Determines if status is YES or NO
-
+  bool isYes = value != 'NO';
   return Padding(
     padding: const EdgeInsets.symmetric(vertical: 6.0),
     child: Row(
@@ -291,7 +287,7 @@ Widget _buildCaseProceedingDetailsAccordion(Map<String, dynamic> caseData, List<
       children: [
         Expanded(
           flex: 2,
-          child: Text(title, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16, color: Colors.black87)),
+          child: Text(title, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16, color: Colors.black)),
         ),
         Expanded(
           flex: 3,
@@ -299,12 +295,12 @@ Widget _buildCaseProceedingDetailsAccordion(Map<String, dynamic> caseData, List<
             children: [
               Icon(
                 isYes ? Icons.check_circle : Icons.cancel,
-                color: isYes ? Colors.green : Colors.red, // Green for YES, Red for NO
+                color: isYes ? Colors.green : Colors.red,
               ),
-              const SizedBox(width: 8), // Spacing between icon and text
+              const SizedBox(width: 8),
               Text(isYes ? value! : "NO", overflow: TextOverflow.ellipsis,
                 style: TextStyle(
-                  color: isYes ? AppColors.secondary : Colors.red, // Match text color with icon
+                  color: isYes ? Colors.green : Colors.red,
                   fontSize: 16,
                 ),
               ),
@@ -328,7 +324,7 @@ Widget _buildOrderDownloadRow(String title, String? path) {
       children: [
         Expanded(
           flex: 2,
-          child: Text(title, style: const TextStyle(fontWeight: FontWeight.bold)),
+          child: Text(title, style: const TextStyle(fontWeight: FontWeight.bold, color: Colors.black)),
         ),
         Expanded(
           flex: 3,
@@ -337,14 +333,14 @@ Widget _buildOrderDownloadRow(String title, String? path) {
                   onPressed: () async {
                       await launchUrl(Uri.parse(pdfUrl), mode: LaunchMode.externalApplication);
                   },
-                  icon: const Icon(Icons.picture_as_pdf, color: Colors.white),
-                  label: const Text("View Order"),
+                  icon: const Icon(Icons.picture_as_pdf, color: Colors.red),
+                  label: const Text("View Order", style: TextStyle(color: Colors.black)),
                   style: ElevatedButton.styleFrom(
-                    backgroundColor: Colors.blue, // Customize button color
+                    backgroundColor: Colors.grey.shade200,
                     padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
                   ),
                 )
-              : const Text("N/A"), // Display N/A if no path is available
+              : const Text("N/A", style: TextStyle(color: Colors.black54)),
         ),
       ],
     ),
@@ -353,8 +349,9 @@ Widget _buildOrderDownloadRow(String title, String? path) {
 Widget _buildAccordionContainer(Widget child) {
   return Container(
     decoration: BoxDecoration(
-      border: Border.all(color: Colors.grey, width: 1.5), // Border styling
-      borderRadius: BorderRadius.circular(12.0), // Rounded corners
+      border: Border.all(color: Colors.grey.shade300, width: 1.5),
+      borderRadius: BorderRadius.circular(12.0),
+      color: Colors.white,
     ),
     child: child,
   );

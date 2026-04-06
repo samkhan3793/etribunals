@@ -13,7 +13,7 @@ class BottomSheetContent extends StatefulWidget {
   final bool showEndDate; // Control end date visibility
 
   const BottomSheetContent({
-    Key? key,
+    super.key,
     required this.onFilterApplied,
     required this.defaultStartDate,
     this.defaultEndDate,
@@ -21,7 +21,7 @@ class BottomSheetContent extends StatefulWidget {
     this.showDropdown = true, // Default to true
     this.showStartDate = true, // Default to true
     this.showEndDate = true, // Default to true
-  }) : super(key: key);
+  });
 
   @override
   _BottomSheetContentState createState() => _BottomSheetContentState();
@@ -107,7 +107,7 @@ class _BottomSheetContentState extends State<BottomSheetContent> {
     String? safeEndDate = widget.showEndDate && _endDate != null ? _endDate!.toLocal().toString().split(' ')[0] : null;
 
     widget.onFilterApplied(_selectedOption ?? 'All', safeStartDate, safeEndDate ?? '');
-    print("Selected Court: $_selectedOption, Start Date: $safeStartDate, End Date: $safeEndDate"); // Debugging for deeper insights
+  // debugPrint("Selected Court: $_selectedOption, Start Date: $safeStartDate, End Date: $safeEndDate"); // Debugging for deeper insights
     Navigator.pop(context);
   } catch (e) {
     debugPrint("Error applying filter: ${e.toString()}"); // Debugging for deeper insights

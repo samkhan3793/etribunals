@@ -156,7 +156,7 @@ Future<List<Map<String, dynamic>>> fetchTableData(String requestUrl) async {
 
     return tableData;
   } catch (e) {
-    print('Error fetching table data: $e');
+  // debugPrint('Error fetching table data: $e');
     rethrow;
   }
 }

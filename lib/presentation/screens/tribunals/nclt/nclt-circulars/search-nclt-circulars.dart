@@ -6,6 +6,8 @@ import 'package:url_launcher/url_launcher.dart';
 import 'package:etribunals/core/constants/app_colors.dart';
 
 class SearchNcltCircularsScreen extends StatefulWidget {
+  const SearchNcltCircularsScreen({super.key});
+
   @override
   _SearchNcltCircularsScreenState createState() => _SearchNcltCircularsScreenState();
 }
@@ -22,7 +24,7 @@ class _SearchNcltCircularsScreenState extends State<SearchNcltCircularsScreen> {
   String? captchaToken;
   
 
-  List<Map<String, String>> _tableData = [];
+  final List<Map<String, String>> _tableData = [];
   bool _isLoading = false;
 
   @override
@@ -193,7 +195,7 @@ class _SearchNcltCircularsScreenState extends State<SearchNcltCircularsScreen> {
                       if (_tableData.isNotEmpty) ...[
                         const Text("Results", style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
                         const SizedBox(height: 10),
-                        ..._tableData.map((data) => _buildCard(data)).toList(),
+                        ..._tableData.map((data) => _buildCard(data)),
                       ],
                     ],
                   ),
@@ -251,7 +253,7 @@ class _SearchNcltCircularsScreenState extends State<SearchNcltCircularsScreen> {
       ? InkWell(
           onTap: () async {
             final uri = Uri.parse("https://nclt.gov.in${entry.value}");
-            print("Opening URL: $uri");
+            // debugPrint("Opening URL: $uri");
             await launchUrl(uri, mode: LaunchMode.externalApplication);
           },
           child: const Text(

@@ -12,6 +12,8 @@ class NCLTDasboardScreen extends StatelessWidget {
     {'title': 'Circulars', 'route': '/nclt/circulars', 'icon': Icons.info},
   ];
 
+  NCLTDasboardScreen({super.key});
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(

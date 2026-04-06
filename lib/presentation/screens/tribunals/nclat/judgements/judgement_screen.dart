@@ -52,7 +52,7 @@ class _ViewJudgementOrdersScreenState extends State<ViewJudgementOrdersScreen> {
         _captchaImageBytes = Uint8List.fromList(response.data);
       });
     } catch (e) {
-      print('Error loading CAPTCHA: $e');
+  // debugPrint('Error loading CAPTCHA: $e');
     }
   }
 
@@ -155,7 +155,7 @@ class _ViewJudgementOrdersScreenState extends State<ViewJudgementOrdersScreen> {
         }
       }
     } catch (e) {
-      print('Error fetching suggestions: $e');
+  // debugPrint('Error fetching suggestions: $e');
     }
   }
 
@@ -261,48 +261,14 @@ class _ViewJudgementOrdersScreenState extends State<ViewJudgementOrdersScreen> {
                       child: customText('Select Case Type', size: 16),
                     ),
                     DropdownMenuItem(
-                      value: '32',
-                      child: customText('Company Appeal(AT)', size: 16),
+                      value: 'CA',
+                      child: customText('Company Appeal', size: 16),
                     ),
                     DropdownMenuItem(
-                      value: '33',
-                      child: customText('Company Appeal(AT)(Ins)', size: 16),
+                      value: 'CP',
+                      child: customText('Company Petition', size: 16),
                     ),
-                    DropdownMenuItem(
-                      value: '34',
-                      child: customText('Competition Appeal(AT)', size: 16),
-                    ),
-                    DropdownMenuItem(
-                      value: '35',
-                      child: customText('Interlocutory Application', size: 16),
-                    ),
-                    DropdownMenuItem(
-                      value: '36',
-                      child: customText('Compensation Application', size: 16),
-                    ),
-                    DropdownMenuItem(
-                      value: '37',
-                      child: customText('Contempt Case(AT)', size: 16),
-                    ),
-                    DropdownMenuItem(
-                      value: '38',
-                      child: customText('Review Application', size: 16),
-                    ),
-                    DropdownMenuItem(
-                      value: '39',
-                      child: customText('Restoration Application', size: 16),
-                    ),
-                    DropdownMenuItem(
-                      value: '40',
-                      child: customText('Transfer Appeal', size: 16),
-                    ),
-                    DropdownMenuItem(
-                      value: '61',
-                      child: customText(
-                        'Transfer Original Petition (MRTP-AT)',
-                        size: 16,
-                      ),
-                    ),
+                    // Add more case types as needed
                   ],
                   onChanged: (value) {
                     setState(() {
@@ -365,8 +331,9 @@ class _ViewJudgementOrdersScreenState extends State<ViewJudgementOrdersScreen> {
             if (_selectedSearchBy == '5') ...[
               Autocomplete<String>(
                 optionsBuilder: (TextEditingValue textEditingValue) {
-                  if (textEditingValue.text.isEmpty)
+                  if (textEditingValue.text.isEmpty) {
                     return const Iterable<String>.empty();
+                  }
                   return _advocateSuggestions.where(
                     (option) => option.toLowerCase().contains(
                       textEditingValue.text.toLowerCase(),
@@ -388,7 +355,7 @@ class _ViewJudgementOrdersScreenState extends State<ViewJudgementOrdersScreen> {
                   );
                 },
                 onSelected: (String selection) {
-                  print('Selected: $selection');
+                  // debugPrint('Selected: $selection');
                 },
               ),
               const SizedBox(height: 16),

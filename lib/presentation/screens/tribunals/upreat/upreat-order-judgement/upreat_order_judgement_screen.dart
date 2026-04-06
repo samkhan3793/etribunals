@@ -14,11 +14,15 @@ class UpreatOrderJudgementScreen extends StatelessWidget {
     final List<dynamic> caseProceedingList = caseDetails["allproceedingdtls"] ?? [];
 
     return Scaffold(
-      appBar: AppBar(title: const Text("Full Order/Judgement of Case"),
-        backgroundColor: AppColors.primary,
+      appBar: AppBar(
+        title: const Text("Full Order/Judgement of Case"),
+        backgroundColor: Colors.white,
         centerTitle: true,
+        iconTheme: const IconThemeData(color: Colors.black),
+        titleTextStyle: const TextStyle(color: Colors.black, fontWeight: FontWeight.bold, fontSize: 20),
+        elevation: 1,
       ),
-      backgroundColor: AppColors.secondary,
+      backgroundColor: Colors.white,
       body: SingleChildScrollView(
         child: Padding(
           padding: const EdgeInsets.all(16.0),
@@ -41,8 +45,8 @@ class UpreatOrderJudgementScreen extends StatelessWidget {
 Widget _buildCaseProceedingDetailsAccordion(Map<String, dynamic> caseData, List<dynamic> caseProceedingList) {
   return ExpansionTile(
     initiallyExpanded: true,
-    title: const Text("Case Proceeding Details", style: TextStyle(fontWeight: FontWeight.bold)),
-    backgroundColor: AppColors.accent,
+  title: const Text("Case Proceeding Details", style: TextStyle(fontWeight: FontWeight.bold, color: Colors.black)),
+  backgroundColor: Colors.white,
     shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
     children: caseProceedingList.asMap().entries.map((entry) {
       int index = entry.key + 1; // Start numbering from 1
@@ -88,7 +92,7 @@ Widget _buildCaseProceedingDetailsAccordion(Map<String, dynamic> caseData, List<
         children: [
           Expanded(
             flex: 2,
-            child: Text(title, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16,color: Colors.black87)),
+            child: Text(title, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16, color: Colors.black)),
           ),
           Expanded(
             flex: 3,
@@ -96,7 +100,7 @@ Widget _buildCaseProceedingDetailsAccordion(Map<String, dynamic> caseData, List<
               value,
               maxLines: 2,
               overflow: TextOverflow.ellipsis,
-              style: const TextStyle(fontSize: 16, color: AppColors.secondary),
+              style: const TextStyle(fontSize: 16, color: Colors.black87),
             ),
           ),
         ],
@@ -116,7 +120,7 @@ Widget _buildOrderDownloadRow(String title, String? path) {
       children: [
         Expanded(
           flex: 2,
-          child: Text(title, style: const TextStyle(fontWeight: FontWeight.bold)),
+          child: Text(title, style: const TextStyle(fontWeight: FontWeight.bold, color: Colors.black)),
         ),
         Expanded(
           flex: 3,
@@ -125,14 +129,14 @@ Widget _buildOrderDownloadRow(String title, String? path) {
                   onPressed: () async {
                       await launchUrl(Uri.parse(pdfUrl), mode: LaunchMode.externalApplication);
                   },
-                  icon: const Icon(Icons.picture_as_pdf, color: Colors.white),
-                  label: const Text("View Order"),
+                  icon: const Icon(Icons.picture_as_pdf, color: Colors.red),
+                  label: const Text("View Order", style: TextStyle(color: Colors.black)),
                   style: ElevatedButton.styleFrom(
-                    backgroundColor: Colors.blue, // Customize button color
+                    backgroundColor: Colors.grey.shade200,
                     padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
                   ),
                 )
-              : const Text("N/A"), // Display N/A if no path is available
+              : const Text("N/A", style: TextStyle(color: Colors.black54)),
         ),
       ],
     ),
@@ -141,8 +145,9 @@ Widget _buildOrderDownloadRow(String title, String? path) {
 Widget _buildAccordionContainer(Widget child) {
   return Container(
     decoration: BoxDecoration(
-      border: Border.all(color: Colors.grey, width: 1.5), // Border styling
-      borderRadius: BorderRadius.circular(12.0), // Rounded corners
+      border: Border.all(color: Colors.grey.shade300, width: 1.5),
+      borderRadius: BorderRadius.circular(12.0),
+      color: Colors.white,
     ),
     child: child,
   );

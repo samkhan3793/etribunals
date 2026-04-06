@@ -35,7 +35,7 @@ class CaseDetailsScreen extends StatelessWidget {
       caseJson['Connected Cases'] = extractTableList(cards[9]);
     } catch (e) {
       caseJson['error'] = 'Error parsing HTML: $e';
-      print('Error: $e');
+  // debugPrint('Error: $e');
     }
 
     return Scaffold(

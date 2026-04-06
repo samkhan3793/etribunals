@@ -6,6 +6,8 @@ import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 
 class SearchNCLTCaseStatusScreen extends StatefulWidget {
+  const SearchNCLTCaseStatusScreen({super.key});
+
   @override
   _SearchNCLTCaseStatusScreenState createState() =>
       _SearchNCLTCaseStatusScreenState();
@@ -149,15 +151,29 @@ class _SearchNCLTCaseStatusScreenState
     }
   }
 
+  Widget _buildDropdown<T>({
+    required T? value,
+    required List<DropdownMenuItem<T>> items,
+    required String label,
+    required ValueChanged<T?> onChanged,
+  }) {
+    return DropdownButtonFormField<T>(
+      value: value,
+      items: items,
+      onChanged: onChanged,
+      decoration: InputDecoration(labelText: label, isDense: true),
+      dropdownColor: Theme.of(context).cardColor,
+      isExpanded: true,
+      menuMaxHeight: MediaQuery.of(context).size.height * 0.4,
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
         title: const Text("Search NCLT Case Status"),
-        centerTitle: true,
-        backgroundColor: AppColors.primary, // Use your primary color her
       ),
-      backgroundColor: AppColors.secondary,
       body: Padding(
         padding: const EdgeInsets.all(16.0),
         child:
@@ -165,35 +181,14 @@ class _SearchNCLTCaseStatusScreenState
                 ? const Center(child: CircularProgressIndicator())
                 : Column(
                   children: [
-                    DropdownButtonFormField<String>(
+                    _buildDropdown<String>(
                       value: _selectedSearchType,
-                      items: _searchTypes.map((type) {
-                        return DropdownMenuItem(
-                          value: type,
-                          child: SizedBox(
-                            width: MediaQuery.of(context).size.width * 0.85, // Adjust width dynamically
-                            child: Text(
-                              type.toUpperCase(),
-                              style: const TextStyle(color: Colors.white),
-                              textAlign: TextAlign.start, // Left alignment
-                              overflow: TextOverflow.ellipsis, // Prevents overflow text issue
-                            ),
-                          ),
-                        );
-                      }).toList(),
+                      label: "Select Search Type",
                       onChanged: (value) => setState(() => _selectedSearchType = value),
-                      decoration: const InputDecoration(
-                        labelText: "Select Search Type",
-                        border: OutlineInputBorder(
-                          borderRadius: BorderRadius.all(Radius.circular(8.0)),
-                        ),
-                        isDense: true, // Reduces extra spacing
-                      ),
-                      dropdownColor: AppColors.secondary, // Sets dropdown background color
-                      isExpanded: true, // Avoids overlap issues
-                      menuMaxHeight: MediaQuery.of(context).size.height * 0.4, // Limits dropdown height dynamically
+                      items: _searchTypes.map((type) {
+                        return DropdownMenuItem(value: type, child: Text(type.toUpperCase()));
+                      }).toList(),
                     ),
-
                     const SizedBox(height: 20),
                     if (_selectedSearchType == 'filingnumber')
                       TextField(
@@ -209,175 +204,44 @@ class _SearchNCLTCaseStatusScreenState
                       ),
                     const SizedBox(height: 20),
                     if (_selectedSearchType == 'casenumber') ...[
-                      DropdownButtonFormField<String>(
+                      _buildDropdown<String>(
                         value: _selectedBench,
-                        items:
-                            _benches.map((bench) {
-                              return DropdownMenuItem(
-                                value: bench['value'],
-                                child: SizedBox(
-                                  width:
-                                      MediaQuery.of(context).size.width *
-                                      0.85, // Adjust width dynamically
-                                  child: Text(
-                                    bench['label']!,
-                                    style: const TextStyle(color: Colors.white),
-                                    textAlign:
-                                        TextAlign.start, // Left alignment
-                                    overflow:
-                                        TextOverflow
-                                            .ellipsis, // Prevents overflow text issue
-                                  ),
-                                ),
-                              );
-                            }).toList(),
-                        onChanged:
-                            (value) => setState(() => _selectedBench = value),
-                        decoration: const InputDecoration(
-                          labelText: "Select Bench",
-                          border: OutlineInputBorder(
-                            borderRadius: BorderRadius.all(
-                              Radius.circular(8.0),
-                            ),
-                          ),
-                          isDense: true, // Reduces extra spacing
-                        ),
-                        dropdownColor:
-                            AppColors
-                                .secondary, // Sets dropdown background color
-                        isExpanded: true, // Avoids overlap issues
-                        menuMaxHeight:
-                            MediaQuery.of(context).size.height *
-                            0.4, // Limits dropdown height dynamically
+                        label: "Select Bench",
+                        onChanged: (value) => setState(() => _selectedBench = value),
+                        items: _benches.map((bench) {
+                          return DropdownMenuItem(value: bench['value'], child: Text(bench['label']!));
+                        }).toList(),
                       ),
-
                       const SizedBox(height: 20),
-                      DropdownButtonFormField<String>(
+                      _buildDropdown<String>(
                         value: _selectedCaseType,
-                        items:
-                            _caseTypes.map((caseType) {
-                              return DropdownMenuItem(
-                                value: caseType['value'],
-                                child: SizedBox(
-                                  width:
-                                      MediaQuery.of(context).size.width *
-                                      0.85, // Adjust width dynamically
-                                  child: Text(
-                                    caseType['label']!,
-                                    style: const TextStyle(color: Colors.white),
-                                    textAlign:
-                                        TextAlign
-                                            .start, // Ensures left alignment
-                                    overflow:
-                                        TextOverflow
-                                            .ellipsis, // Prevents overflow text issue
-                                  ),
-                                ),
-                              );
-                            }).toList(),
-                        onChanged:
-                            (value) =>
-                                setState(() => _selectedCaseType = value),
-                        decoration: const InputDecoration(
-                          labelText: "Select Case Type",
-                          border: OutlineInputBorder(
-                            borderRadius: BorderRadius.all(
-                              Radius.circular(8.0),
-                            ),
-                          ),
-                          isDense: true, // Reduces extra spacing
-                        ),
-                        dropdownColor:
-                            AppColors
-                                .secondary, // Sets dropdown background color
-                        isExpanded: true, // Avoids overlap issues
-                        menuMaxHeight:
-                            MediaQuery.of(context).size.height *
-                            0.4, // Limits dropdown height dynamically
+                        label: "Select Case Type",
+                        onChanged: (value) => setState(() => _selectedCaseType = value),
+                        items: _caseTypes.map((caseType) {
+                          return DropdownMenuItem(value: caseType['value'], child: Text(caseType['label']!));
+                        }).toList(),
                       ),
-
                       const SizedBox(height: 20),
                       TextField(
                         controller: _caseNumberController,
-                        decoration: const InputDecoration(
-                          labelText: "Enter Case Number",
-                          border: OutlineInputBorder(
-                            borderRadius: BorderRadius.all(
-                              Radius.circular(8.0),
-                            ),
-                          ),
-                        ),
+                        decoration: const InputDecoration(labelText: "Enter Case Number"),
                       ),
                       const SizedBox(height: 20),
-                      DropdownButtonFormField<String>(
-                        value:
-                            _selectedCaseYear != null &&
-                                    _caseYears.contains(_selectedCaseYear)
-                                ? _selectedCaseYear
-                                : (_caseYears.isNotEmpty
-                                    ? _caseYears.first
-                                    : null), // Prevents null exceptions
-                        items:
-                            _caseYears.map((year) {
-                              return DropdownMenuItem(
-                                value: year,
-                                child: SizedBox(
-                                  width:
-                                      MediaQuery.of(context).size.width *
-                                      0.85, // Adjust width dynamically
-                                  child: Text(
-                                    year,
-                                    style: const TextStyle(color: Colors.white),
-                                    textAlign:
-                                        TextAlign.start, // Left alignment
-                                    overflow:
-                                        TextOverflow
-                                            .ellipsis, // Prevents overflow text issue
-                                  ),
-                                ),
-                              );
-                            }).toList(),
-                        onChanged:
-                            (value) =>
-                                setState(() => _selectedCaseYear = value),
-                        decoration: const InputDecoration(
-                          labelText: "Select Case Year",
-                          border: OutlineInputBorder(
-                            borderRadius: BorderRadius.all(
-                              Radius.circular(8.0),
-                            ),
-                          ),
-                          isDense: true, // Reduces extra spacing
-                        ),
-                        dropdownColor:
-                            AppColors
-                                .secondary, // Sets dropdown background color
-                        isExpanded: true, // Avoids overlap issues
-                        menuMaxHeight:
-                            MediaQuery.of(context).size.height *
-                            0.4, // Limits dropdown height dynamically
+                      _buildDropdown<String>(
+                        value: _caseYears.contains(_selectedCaseYear) ? _selectedCaseYear : _caseYears.first,
+                        label: "Select Case Year",
+                        onChanged: (value) => setState(() => _selectedCaseYear = value),
+                        items: _caseYears.map((year) {
+                          return DropdownMenuItem(value: year, child: Text(year));
+                        }).toList(),
                       ),
                     ],
                     const SizedBox(height: 20),
-                    ElevatedButton(
-                      onPressed: _submitForm,
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor:
-                            AppColors.primary, // Use your primary color here
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: 24,
-                          vertical: 12,
-                        ),
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(8.0),
-                        ),
-                      ),
-                      child: const Text(
-                        "Search Case Status",
-                        style: TextStyle(
-                          fontSize: 16,
-                          fontWeight: FontWeight.bold,
-                        ),
+                    SizedBox(
+                      width: double.infinity,
+                      child: ElevatedButton(
+                        onPressed: _submitForm,
+                        child: const Text("Search Case Status"),
                       ),
                     ),
                   ],

@@ -6,7 +6,7 @@ Widget customText(
   String text, {
   double size = 16,
   FontWeight weight = FontWeight.normal,
-  Color color = Colors.white,
+  Color color = Colors.black,
   TextAlign align = TextAlign.start,
 }) {
   return Text(
@@ -29,13 +29,13 @@ Widget inputTextField({
     obscureText: isPassword,
     keyboardType: inputType,
     validator: validator,
-    style: const TextStyle(color: Colors.white),
+    style: const TextStyle(color: Colors.black),
     decoration: InputDecoration(
       labelText: label,
-      labelStyle: const TextStyle(color: Colors.white70),
+      labelStyle: const TextStyle(color: Colors.black54),
       border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
       enabledBorder: OutlineInputBorder(
-        borderSide: BorderSide(color: Colors.white38),
+        borderSide: BorderSide(color: Colors.black26),
         borderRadius: BorderRadius.circular(10),
       ),
       focusedBorder: OutlineInputBorder(
@@ -66,11 +66,11 @@ class CustomAppBar extends StatelessWidget implements PreferredSizeWidget {
   final Color backgroundColor;
 
   const CustomAppBar({
-    Key? key,
+    super.key,
     required this.title,
     this.actions,
-    this.backgroundColor = Colors.blue, // Default color
-  }) : super(key: key);
+  this.backgroundColor = Colors.blue, // Default color
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -103,10 +103,10 @@ class CustomFooterBar extends StatelessWidget {
   final Function(int) onItemTapped;
 
   const CustomFooterBar({
-    Key? key,
+    super.key,
     this.selectedIndex = 0,
     required this.onItemTapped,
-  }) : super(key: key);
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -134,7 +134,7 @@ class CustomFooterBar extends StatelessWidget {
           label: 'Profile',
         ),
       ],
-      backgroundColor: Colors.white,
+  backgroundColor: Colors.white,
       type: BottomNavigationBarType.fixed,
     );
   }
@@ -151,12 +151,12 @@ class CustomDropdown extends StatelessWidget {
   final Function(String?) onChanged;
 
   const CustomDropdown({
-    Key? key,
+    super.key,
     required this.label,
     required this.selectedValue,
     required this.items,
     required this.onChanged,
-  }) : super(key: key);
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -198,7 +198,7 @@ class CustomTextInput extends StatelessWidget {
       onEditingComplete: onEditingComplete,
       decoration: InputDecoration(
         labelText: label,
-        labelStyle: const TextStyle(color: Colors.white70),
+        labelStyle: const TextStyle(color: Colors.black54),
         filled: true,
         fillColor: AppColors.accent,
         border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
@@ -207,7 +207,7 @@ class CustomTextInput extends StatelessWidget {
           borderRadius: BorderRadius.circular(12),
         ),
       ),
-      style: const TextStyle(color: Colors.white),
+      style: const TextStyle(color: Colors.black),
     );
   }
 }

@@ -5,12 +5,12 @@ class CustomSidebarMenu extends StatelessWidget {
   final String userName; // User's name to display in the sidebar
 
   // Constructor to accept the user's name
-  CustomSidebarMenu({required this.userName});
+  const CustomSidebarMenu({super.key, required this.userName});
 
   @override
   Widget build(BuildContext context) {
     return Drawer(
-      backgroundColor: AppColors.primary, // Custom background color for the sidebar
+  backgroundColor: Colors.white, // White background for sidebar
       child: ListView(
         padding: EdgeInsets.zero,
         children: <Widget>[
@@ -37,7 +37,7 @@ class CustomSidebarMenu extends StatelessWidget {
                   style: TextStyle(
                     fontSize: 18,
                     fontWeight: FontWeight.bold,
-                    color: Colors.white,
+                    color: Colors.black,
                   ),
                 ),
               ],
@@ -65,11 +65,11 @@ class CustomSidebarMenu extends StatelessWidget {
   // Helper method to build each drawer item
   Widget _buildDrawerItem(BuildContext context, IconData icon, String title, VoidCallback onTap) {
     return ListTile(
-      leading: Icon(icon, color: Colors.white), // Icon for the menu item
+  leading: Icon(icon, color: Colors.black), // Icon for the menu item
       title: Text(
         title,
         style: TextStyle(
-          color: Colors.white, // White text color for the menu items
+          color: Colors.black, // Black text color for the menu items
           fontSize: 16,
           fontWeight: FontWeight.bold, // Bold text for better readability
         ),

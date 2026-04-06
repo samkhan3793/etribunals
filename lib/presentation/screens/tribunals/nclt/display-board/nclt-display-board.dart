@@ -1,6 +1,5 @@
 import 'package:etribunals/presentation/screens/tribunals/nclat/displayboard/view-details-screen.dart';
 import 'package:flutter/material.dart';
-import 'package:etribunals/core/constants/app_colors.dart';
 import 'package:etribunals/core/widgets/common_widgets.dart';
 import 'package:etribunals/core/utils/web_scraper.dart';
 class NCLTDisplayBoardScreen extends StatefulWidget {
@@ -58,21 +57,24 @@ class _NCLTDisplayBoardScreenState extends State<NCLTDisplayBoardScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: AppColors.secondary,
+      backgroundColor: Colors.white,
       appBar: AppBar(
-        title: const Text("NCLT Display Board List", style: TextStyle(color: Colors.white)),
+        title: const Text("NCLT Display Board List"),
         centerTitle: true,
-        backgroundColor: AppColors.primary,
+        backgroundColor: Colors.white,
+        iconTheme: const IconThemeData(color: Colors.black),
+        titleTextStyle: const TextStyle(color: Colors.black, fontWeight: FontWeight.bold, fontSize: 20),
+        elevation: 1,
       ),
       body: GestureDetector(
         onHorizontalDragEnd: (details) {
-          if (details.primaryVelocity! < 0) { // Left swipe detected
+          if (details.primaryVelocity! < 0) {
             _loadDisplayBoard();
           }
         },
         child: RefreshIndicator(
           onRefresh: _loadDisplayBoard,
-          color: AppColors.primary,
+          color: Colors.blue,
           child: Column(
             children: [
               // Location dropdown at the top
@@ -97,7 +99,7 @@ class _NCLTDisplayBoardScreenState extends State<NCLTDisplayBoardScreen> {
                       borderRadius: BorderRadius.all(Radius.circular(8.0)),
                     ),
                   ),
-                  dropdownColor: AppColors.accent, // Dropdown styling
+                  dropdownColor: Colors.white, // Dropdown styling
                   isExpanded: true,
                 ),
               ),
@@ -171,20 +173,21 @@ class _NCLTDisplayBoardScreenState extends State<NCLTDisplayBoardScreen> {
     if (requestUrl != null) {
       return ElevatedButton(
         style: ElevatedButton.styleFrom(
-          backgroundColor: AppColors.primary,
+          backgroundColor: Colors.blue.shade100,
+          foregroundColor: Colors.black,
           padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
         ),
         onPressed: () {
           Navigator.push(
             context,
             MaterialPageRoute(
-              builder: (context) => ViewDetailsScreen(requestUrl: requestUrl), // Pass URL
+              builder: (context) => ViewDetailsScreen(requestUrl: requestUrl),
             ),
           );
         },
         child: Text(
           label,
-          style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
+          style: const TextStyle(color: Colors.black, fontWeight: FontWeight.bold),
         ),
       );
     } else {

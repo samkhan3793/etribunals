@@ -16,6 +16,8 @@ class DashboardScreen extends StatelessWidget {
     {'name': 'DRT', 'icon': Icons.account_balance_outlined},
   ];
 
+  DashboardScreen({super.key});
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(

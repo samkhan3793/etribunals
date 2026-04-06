@@ -3,6 +3,8 @@ import 'package:etribunals/core/constants/app_colors.dart';
 import 'package:etribunals/core/widgets/common_widgets.dart';
 
 class DRTScreen extends StatelessWidget {
+  const DRTScreen({super.key});
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(

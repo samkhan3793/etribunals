@@ -1,11 +1,12 @@
 import 'dart:convert';
 
-import 'package:etribunals/core/constants/app_colors.dart';
 import 'package:etribunals/presentation/screens/tribunals/nclt/nclt-order-judgement/nclt_order_judgement_search_results_screen.dart';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 
 class SearchNCLTOrderJudgementScreen extends StatefulWidget {
+  const SearchNCLTOrderJudgementScreen({super.key});
+
   @override
   _SearchNCLTOrderJudgementScreenState createState() =>
       _SearchNCLTOrderJudgementScreenState();
@@ -155,9 +156,12 @@ class _SearchNCLTOrderJudgementScreenState
       appBar: AppBar(
         title: const Text("Search NCLT Order/ Judgement"),
         centerTitle: true,
-        backgroundColor: AppColors.primary, // Use your primary color her
+        backgroundColor: Colors.white,
+        iconTheme: const IconThemeData(color: Colors.black),
+        titleTextStyle: const TextStyle(color: Colors.black, fontWeight: FontWeight.bold, fontSize: 20),
+        elevation: 1,
       ),
-      backgroundColor: AppColors.secondary,
+      backgroundColor: Colors.white,
       body: Padding(
         padding: const EdgeInsets.all(16.0),
         child:
@@ -171,12 +175,12 @@ class _SearchNCLTOrderJudgementScreenState
                         return DropdownMenuItem(
                           value: type,
                           child: SizedBox(
-                            width: MediaQuery.of(context).size.width * 0.85, // Adjust width dynamically
+                            width: MediaQuery.of(context).size.width * 0.85,
                             child: Text(
                               type.toUpperCase(),
-                              style: const TextStyle(color: Colors.white),
-                              textAlign: TextAlign.start, // Left alignment
-                              overflow: TextOverflow.ellipsis, // Prevents overflow text issue
+                              style: const TextStyle(color: Colors.black),
+                              textAlign: TextAlign.start,
+                              overflow: TextOverflow.ellipsis,
                             ),
                           ),
                         );
@@ -187,11 +191,11 @@ class _SearchNCLTOrderJudgementScreenState
                         border: OutlineInputBorder(
                           borderRadius: BorderRadius.all(Radius.circular(8.0)),
                         ),
-                        isDense: true, // Reduces extra spacing
+                        isDense: true,
                       ),
-                      dropdownColor: AppColors.secondary, // Sets dropdown background color
-                      isExpanded: true, // Avoids overlap issues
-                      menuMaxHeight: MediaQuery.of(context).size.height * 0.4, // Limits dropdown height dynamically
+                      dropdownColor: Colors.white,
+                      isExpanded: true,
+                      menuMaxHeight: MediaQuery.of(context).size.height * 0.4,
                     ),
 
                     const SizedBox(height: 20),
@@ -221,7 +225,7 @@ class _SearchNCLTOrderJudgementScreenState
                                       0.85, // Adjust width dynamically
                                   child: Text(
                                     bench['label']!,
-                                    style: const TextStyle(color: Colors.white),
+                                    style: const TextStyle(color: Colors.black),
                                     textAlign:
                                         TextAlign.start, // Left alignment
                                     overflow:
@@ -242,9 +246,7 @@ class _SearchNCLTOrderJudgementScreenState
                           ),
                           isDense: true, // Reduces extra spacing
                         ),
-                        dropdownColor:
-                            AppColors
-                                .secondary, // Sets dropdown background color
+                        dropdownColor: Colors.white,
                         isExpanded: true, // Avoids overlap issues
                         menuMaxHeight:
                             MediaQuery.of(context).size.height *
@@ -264,7 +266,7 @@ class _SearchNCLTOrderJudgementScreenState
                                       0.85, // Adjust width dynamically
                                   child: Text(
                                     caseType['label']!,
-                                    style: const TextStyle(color: Colors.white),
+                                    style: const TextStyle(color: Colors.black),
                                     textAlign:
                                         TextAlign
                                             .start, // Ensures left alignment
@@ -287,9 +289,7 @@ class _SearchNCLTOrderJudgementScreenState
                           ),
                           isDense: true, // Reduces extra spacing
                         ),
-                        dropdownColor:
-                            AppColors
-                                .secondary, // Sets dropdown background color
+                        dropdownColor: Colors.white,
                         isExpanded: true, // Avoids overlap issues
                         menuMaxHeight:
                             MediaQuery.of(context).size.height *
@@ -327,7 +327,7 @@ class _SearchNCLTOrderJudgementScreenState
                                       0.85, // Adjust width dynamically
                                   child: Text(
                                     year,
-                                    style: const TextStyle(color: Colors.white),
+                                    style: const TextStyle(color: Colors.black),
                                     textAlign:
                                         TextAlign.start, // Left alignment
                                     overflow:
@@ -349,9 +349,7 @@ class _SearchNCLTOrderJudgementScreenState
                           ),
                           isDense: true, // Reduces extra spacing
                         ),
-                        dropdownColor:
-                            AppColors
-                                .secondary, // Sets dropdown background color
+                        dropdownColor: Colors.white,
                         isExpanded: true, // Avoids overlap issues
                         menuMaxHeight:
                             MediaQuery.of(context).size.height *
@@ -362,8 +360,8 @@ class _SearchNCLTOrderJudgementScreenState
                     ElevatedButton(
                       onPressed: _submitForm,
                       style: ElevatedButton.styleFrom(
-                        backgroundColor:
-                            AppColors.primary, // Use your primary color here
+                        backgroundColor: Colors.blue.shade100,
+                        foregroundColor: Colors.black,
                         padding: const EdgeInsets.symmetric(
                           horizontal: 24,
                           vertical: 12,
@@ -371,6 +369,7 @@ class _SearchNCLTOrderJudgementScreenState
                         shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(8.0),
                         ),
+                        elevation: 2,
                       ),
                       child: const Text(
                         "Search Case Status",

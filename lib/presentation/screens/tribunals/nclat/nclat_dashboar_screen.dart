@@ -16,6 +16,8 @@ class NCLATScreen extends StatelessWidget {
     {'title': 'Act & Rules', 'route': '/nclat/acts-rules', 'icon': Icons.rule},
   ];
 
+  NCLATScreen({super.key});
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(

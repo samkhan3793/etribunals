@@ -166,7 +166,7 @@ class _ViewPriorDailyOrdersRegistrarScreenState extends State<ViewPriorDailyOrde
   Widget _buildDownloadWidget(Map<String, dynamic> valueMap) {
     final label = valueMap['label'] ?? 'Download';
     final relativeUrl = valueMap['url'];
-    print('Relative URL: $relativeUrl');
+  // debugPrint('Relative URL: $relativeUrl');
     if (relativeUrl != null && relativeUrl.toString().endsWith('.pdf')) {
       final fullUrl = 'https://nclat.nic.in$relativeUrl';
       return InkWell(

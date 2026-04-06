@@ -26,7 +26,7 @@ class OrdersDetailsScreen extends StatelessWidget {
       caseJson['Order History'] = extractTableList(cards[7]);
     } catch (e) {
       caseJson['error'] = 'Error parsing HTML: $e';
-      print('Error: $e');
+  // debugPrint('Error: $e');
     }
 
     return Scaffold(

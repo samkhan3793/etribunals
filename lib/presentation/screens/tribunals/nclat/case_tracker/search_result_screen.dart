@@ -14,7 +14,7 @@ class ResultScreen extends StatefulWidget {
 }
 
 class _ResultScreenState extends State<ResultScreen> {
-  List<Map<String, String>> _cases = [];
+  final List<Map<String, String>> _cases = [];
   bool _isLoading = true;
   String? _errorMessage;
 
