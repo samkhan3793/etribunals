@@ -1,80 +1,54 @@
+import 'package:etribunals/core/constants/app_colors.dart';
 import 'package:flutter/material.dart';
-import 'package:etribunals/core/constants/app_colors.dart'; // Custom AppColors
 
 class CustomSidebarMenu extends StatelessWidget {
-  final String userName; // User's name to display in the sidebar
-
-  // Constructor to accept the user's name
-  const CustomSidebarMenu({super.key, required this.userName});
+  const CustomSidebarMenu({super.key});
 
   @override
   Widget build(BuildContext context) {
     return Drawer(
-  backgroundColor: Colors.white, // White background for sidebar
+      backgroundColor: AppColors.paper,
       child: ListView(
         padding: EdgeInsets.zero,
-        children: <Widget>[
-          // DrawerHeader section for user profile
-          DrawerHeader(
-            decoration: BoxDecoration(
-              color: AppColors.secondary, // Use secondary color for the header
-            ),
+        children: [
+          const DrawerHeader(
+            decoration: BoxDecoration(gradient: AppColors.heroGradient),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 CircleAvatar(
-                  radius: 30,
+                  radius: 26,
                   backgroundColor: Colors.white,
-                  child: Icon(
-                    Icons.account_circle, // Placeholder for the profile image
-                    size: 40,
-                    color: AppColors.accent,
-                  ),
+                  child: Icon(Icons.account_balance, size: 28, color: AppColors.primary),
                 ),
                 SizedBox(height: 10),
                 Text(
-                  userName,
-                  style: TextStyle(
-                    fontSize: 18,
-                    fontWeight: FontWeight.bold,
-                    color: Colors.black,
-                  ),
+                  'eTribunals',
+                  style: TextStyle(fontSize: 18, fontWeight: FontWeight.w800, color: Colors.white),
+                ),
+                Text(
+                  'Public records on this phone',
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: TextStyle(color: Colors.white70, fontSize: 12),
                 ),
               ],
             ),
           ),
-          // Sidebar menu items
-          _buildDrawerItem(context, Icons.dashboard, 'Dashboard', () {
-            Navigator.pushReplacementNamed(context, '/dashboard'); // Navigate to Dashboard
-          }),
-          _buildDrawerItem(context, Icons.account_circle, 'Profile', () {
-            Navigator.pushNamed(context, '/profile'); // Navigate to Profile
-          }),
-          _buildDrawerItem(context, Icons.settings, 'Settings', () {
-            Navigator.pushNamed(context, '/settings'); // Navigate to Settings
-          }),
-          _buildDrawerItem(context, Icons.exit_to_app, 'Log Out', () {
-            // Log out functionality
-            Navigator.pushReplacementNamed(context, '/login'); // Navigate to Login
-          }),
+          ListTile(
+            leading: const Icon(Icons.account_balance_outlined, color: AppColors.primary),
+            title: const Text('Tribunals', style: TextStyle(fontWeight: FontWeight.w700)),
+            onTap: () => Navigator.pop(context),
+          ),
+          const Padding(
+            padding: EdgeInsets.fromLTRB(16, 20, 16, 8),
+            child: Text(
+              'Live: NCLAT · NCLT · UPREAT · NGT · RCT · DRT · CAT · ITAT · CESTAT · TDSAT · APTEL · SAT · AFT · NCDRC · ATFP · CGIT',
+              style: TextStyle(fontSize: 11.5, fontWeight: FontWeight.w700, color: AppColors.textMuted),
+            ),
+          ),
         ],
       ),
-    );
-  }
-
-  // Helper method to build each drawer item
-  Widget _buildDrawerItem(BuildContext context, IconData icon, String title, VoidCallback onTap) {
-    return ListTile(
-  leading: Icon(icon, color: Colors.black), // Icon for the menu item
-      title: Text(
-        title,
-        style: TextStyle(
-          color: Colors.black, // Black text color for the menu items
-          fontSize: 16,
-          fontWeight: FontWeight.bold, // Bold text for better readability
-        ),
-      ),
-      onTap: onTap, // When a menu item is tapped, it navigates
     );
   }
 }

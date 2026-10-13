@@ -1,6 +1,6 @@
-import 'package:etribunals/core/constants/app_colors.dart';
+import 'package:etribunals/core/constants/tribunal_sources.dart';
+import 'package:etribunals/core/widgets/in_app_document_screen.dart';
 import 'package:flutter/material.dart';
-import 'package:url_launcher/url_launcher.dart';
 
 class UpreatOrderJudgementScreen extends StatelessWidget {
   final Map<String, dynamic> caseDetails;
@@ -110,7 +110,7 @@ Widget _buildCaseProceedingDetailsAccordion(Map<String, dynamic> caseData, List<
 
 Widget _buildOrderDownloadRow(String title, String? path) {
   final String pdfUrl = path != null && path.isNotEmpty
-      ? "https://efiling.upreat.gov.in/ordersview.in?path=$path"
+      ? TribunalSources.upreatOrderPdf(path)
       : "";
 
   return Padding(
@@ -125,15 +125,15 @@ Widget _buildOrderDownloadRow(String title, String? path) {
         Expanded(
           flex: 3,
           child: path != null && path.isNotEmpty
-              ? ElevatedButton.icon(
-                  onPressed: () async {
-                      await launchUrl(Uri.parse(pdfUrl), mode: LaunchMode.externalApplication);
-                  },
-                  icon: const Icon(Icons.picture_as_pdf, color: Colors.red),
-                  label: const Text("View Order", style: TextStyle(color: Colors.black)),
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: Colors.grey.shade200,
-                    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+              ? Builder(
+                  builder: (context) => ElevatedButton.icon(
+                    onPressed: () => InAppDocumentScreen.open(context, pdfUrl, title: 'Order'),
+                    icon: const Icon(Icons.picture_as_pdf, color: Colors.red),
+                    label: const Text("View Order", style: TextStyle(color: Colors.black)),
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: Colors.grey.shade200,
+                      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                    ),
                   ),
                 )
               : const Text("N/A", style: TextStyle(color: Colors.black54)),

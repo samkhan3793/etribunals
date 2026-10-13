@@ -1,4 +1,4 @@
-import 'dart:developer';
+﻿import 'dart:developer';
 import 'package:etribunals/core/constants/app_colors.dart';
 import 'package:etribunals/presentation/screens/tribunals/upreat/cause-list/upreat_cause_list_details.dart';
 import 'package:flutter/material.dart';
@@ -193,70 +193,58 @@ void _initializeDates() {
     );
   }
 
-  /// Builds each row as a Card with key-value pairs
-  Widget _buildCardView(Map<String, dynamic> rowData) {  return Card(
-    color: AppColors.white,
-    margin: const EdgeInsets.all(8),
-    elevation: 4,
-    shape: RoundedRectangleBorder(
-      borderRadius: BorderRadius.circular(10),
-      side: BorderSide(color: AppColors.primary, width: 1),
-    ),
-    child: Padding(
-      padding: const EdgeInsets.all(12),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: rowData.entries.map((entry) {
-          return Padding(
-            padding: const EdgeInsets.symmetric(vertical: 6),
-            child: Row(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                if (entry.key != "View") // Show key only if it's not "View"
-                  Text(
-                    "${entry.key}: ",
-                    style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16, color: AppColors.primary),
-                  ),
-                const SizedBox(width: 8),
-                Expanded(
-                  child: entry.key == "View" && rowData.containsKey("bench_no")
-                      ? ElevatedButton(
-                          onPressed: () {
-                            // Dynamically extract values
-                            final nextListDate = rowData["next_list_date"]!;
-                            final lisDate = rowData["lis_date"]!;
-                            final benchNo = rowData["bench_no"]!;
-                            Navigator.push(
-                              context,
-                              MaterialPageRoute(
-                                builder: (context) => CauseListDetailScreen(
-                                  causeType: "1", // Fixed as required
-                                  nextListDate: nextListDate,
-                                  lisDate: lisDate,
-                                  benchNo: benchNo,
-                                ),
-                              ),
-                            );
-                          },
-                          child: const Text("View Details", style: TextStyle(fontSize: 16)
-, overflow: TextOverflow.clip, textAlign: TextAlign.center),
-                        )
-                      : Text(entry.value.toString(),
-                          style: TextStyle(fontSize: 16, color: Colors.black54, fontWeight: FontWeight.normal,overflow: TextOverflow.clip),
-                        ),
-                ),
-              ],
-            ),
-          );
-        }).toList(),
+  Widget _buildCardView(Map<String, dynamic> rowData) {
+    final court = rowData['Court']?.toString() ?? rowData['Bench']?.toString() ?? 'Court';
+    final date = rowData['Date']?.toString() ?? rowData['Listing Date']?.toString() ?? '';
+    final item = rowData['Item No']?.toString() ?? rowData['Sr. No']?.toString() ?? '';
+    return Card(
+      color: AppColors.paper,
+      margin: const EdgeInsets.fromLTRB(16, 0, 16, 12),
+      elevation: 0,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(10),
+        side: const BorderSide(color: Color(0x3314384A)),
       ),
-    ),
-  );
-}
-
-
-
-/// Shows Date Selection Modal
+      child: Padding(
+        padding: const EdgeInsets.fromLTRB(12, 12, 12, 10),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(court, style: const TextStyle(fontWeight: FontWeight.w800, color: AppColors.ink, fontSize: 15.5)),
+            if (date.isNotEmpty) ...[
+              const SizedBox(height: 4),
+              Text(date, style: const TextStyle(color: AppColors.textMuted, fontSize: 13)),
+            ],
+            if (item.isNotEmpty) ...[
+              const SizedBox(height: 4),
+              Text(item, style: const TextStyle(color: AppColors.textMuted, fontSize: 13)),
+            ],
+            const SizedBox(height: 10),
+            if (rowData.containsKey('bench_no'))
+              Align(
+                alignment: Alignment.centerRight,
+                child: FilledButton(
+                  onPressed: () {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (context) => CauseListDetailScreen(
+                          causeType: '1',
+                          nextListDate: rowData['next_list_date']?.toString() ?? '',
+                          lisDate: rowData['lis_date']?.toString() ?? '',
+                          benchNo: rowData['bench_no']?.toString() ?? '',
+                        ),
+                      ),
+                    );
+                  },
+                  child: const Text('View list'),
+                ),
+              ),
+          ],
+        ),
+      ),
+    );
+  }
 void _showDateFilterBottomSheet(BuildContext context) {
   showModalBottomSheet(
     context: context,

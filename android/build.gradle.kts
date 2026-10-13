@@ -5,10 +5,10 @@ buildscript {
     }
 
     dependencies {
-        classpath("com.android.tools.build:gradle:8.1.1")
+        classpath("com.android.tools.build:gradle:8.7.3")
         classpath("com.google.gms:google-services:4.4.0") // Firebase plugin
-        // Update Kotlin Gradle plugin version to 2.1.0 (to match the Firebase Kotlin requirements)
-        classpath("org.jetbrains.kotlin:kotlin-gradle-plugin:2.1.0")
+        // Using a stable Kotlin version compatible with AGP 8.7.3
+        classpath("org.jetbrains.kotlin:kotlin-gradle-plugin:2.0.21")
     }
 }
 

@@ -1,0 +1,72 @@
+eTribunals — Play Console copy
+Package: com.zrh.etribunals.etribunals
+Version in pubspec: 1.0.0+1  (versionName 1.0.0, versionCode 1)
+
+APP NAME (30 chars max)
+eTribunals
+
+SHORT DESCRIPTION (80 chars max)
+Follow Indian tribunal cases, orders, cause lists. AI summary on PDFs.
+
+FULL DESCRIPTION
+eTribunals is an independent companion for public Indian tribunal records. It is not a government app and not legal advice.
+
+Search case status, cause lists, orders and judgements from NCLAT, NCLT, UPREAT, NGT, RCT, DRT, CAT, ITAT, CESTAT, TDSAT, APTEL, SAT, AFT, NCDRC, ATFP and CGIT — the way those sites publish them.
+
+Follow a matter on this phone. See followed hearings on Today. Save a PDF and open it in the app. Tap AI Summarize for held points and operative directions, then ask a short follow-up about that order.
+
+Always verify on the official tribunal website before you file, pay a fee, or rely on a date.
+
+CATEGORY
+Suggested: Productivity or Tools. Tags: legal, court, case status, India
+
+CONTACTS
+Play requires a privacy policy URL (host play_store/privacy_policy.html on GitHub Pages, your site, or Drive is not enough — use a public https page).
+Developer email (Play Console).
+Physical address (Play now asks for a developer address in many countries).
+
+DATA SAFETY (be honest)
+• No account
+• Bookmarks stored on device
+• AI Summarize: user-generated content / files sent to Google Gemini (not sold by you)
+• Optional notifications (reminders)
+
+CONTENT RATING
+IARC questionnaire: typically Everyone / PEGI 3. No user-generated social, no ads if you have none.
+
+ASSETS IN THIS FOLDER
+phone_screenshots/   — upload 01–08 IN THIS ORDER (phone, 1080×1920, 9:16, 24-bit PNG, under 8 MB)
+  01_home.png
+  02_tribunals.png
+  03_nclt_tools.png
+  04_nclat_tools.png
+  05_case_search.png
+  06_case_results.png
+  07_case_record.png
+  08_ai_summarize.png
+extra_screenshots/   — swap-ins if Console rejects one (My Cases, PDF, full case)
+hi_res_icon_512.png  — Play hi-res icon 512×512
+feature_graphic_1024x500.png  — required 1024×500
+privacy_policy.html  — host this, paste URL in Console
+
+Play screenshot rules these files meet:
+• PNG, 24-bit RGB, no transparency
+• 1080×1920 (between 320 and 3840)
+• Longest side / shortest side = 1.78 (must be ≤ 2)
+• 8 phone shots (minimum 2, maximum 8)
+
+RELEASE
+flutter build appbundle
+Output: build/app/outputs/bundle/release/app-release.aab
+Upload that AAB (not the debug APK).
+
+SIGNING
+Upload keystore is android/upload-keystore.jks (gitignored).
+Passwords: android/key.properties (gitignored).
+Back both up offline. If you lose them you cannot update the same Play listing.
+
+DO NOT
+Ship a debug-signed AAB.
+Claim you are a court or government.
+Skip the privacy policy URL.
+Forget Data safety for Gemini PDF upload.

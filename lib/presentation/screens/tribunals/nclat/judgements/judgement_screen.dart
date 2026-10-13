@@ -1,5 +1,7 @@
-import 'dart:typed_data';
-import 'package:etribunals/core/widgets/common_widgets.dart';
+﻿import 'dart:typed_data';
+import 'package:etribunals/core/constants/tribunal_sources.dart';
+import 'package:etribunals/core/widgets/court_band.dart';
+import 'package:etribunals/core/widgets/source_footer.dart';
 import 'package:etribunals/presentation/screens/tribunals/nclat/judgements/order_search_result_screen.dart';
 import 'package:flutter/material.dart';
 import 'package:dio/dio.dart';
@@ -32,7 +34,7 @@ class _ViewJudgementOrdersScreenState extends State<ViewJudgementOrdersScreen> {
   String _selectedSearchBy = '1';
   String _selectedCaseType = '';
   String _selectedCaseStatus = '';
-  String _selectedCaseYear = '';
+  String _selectedCaseYear = '${DateTime.now().year}';
   bool _loading = false;
 
   @override
@@ -171,283 +173,161 @@ class _ViewJudgementOrdersScreenState extends State<ViewJudgementOrdersScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        title: Text('Download Judgements Orders'),
-        backgroundColor: AppColors.primary,
-      ),
+      appBar: AppBar(title: const Text('NCLAT judgements / orders')),
       backgroundColor: AppColors.secondary,
-      body: Padding(
-        padding: const EdgeInsets.all(16.0),
-        child: ListView(
-          children: [
-            // Location Dropdown
-            _dropdownContainer(
-              child: DropdownButton<String>(
-                value: _selectedLocation,
-                style: TextStyle(color: Colors.white),
-                dropdownColor: AppColors.accent,
-                items: [
-                  DropdownMenuItem(
-                    value: 'delhi',
-                    child: customText('New Delhi', size: 16),
-                  ),
-                  DropdownMenuItem(
-                    value: 'chennai',
-                    child: customText('Chennai', size: 16),
-                  ),
-                ],
-                onChanged: (value) {
-                  setState(() {
-                    _selectedLocation = value!;
-                  });
-                },
-                isExpanded: true,
-              ),
-            ),
-
-            const SizedBox(height: 16),
-
-            // Search By Dropdown
-            _dropdownContainer(
-              child: DropdownButton<String>(
-                value: _selectedSearchBy,
-                style: TextStyle(color: Colors.white),
-                dropdownColor: AppColors.accent,
-                items: [
-                  DropdownMenuItem(
-                    value: '1',
-                    child: customText('Filing No/Diary No', size: 16),
-                  ),
-                  DropdownMenuItem(
-                    value: '2',
-                    child: customText('Case Type', size: 16),
-                  ),
-                  DropdownMenuItem(
-                    value: '3',
-                    child: customText('Case Number', size: 16),
-                  ),
-                  DropdownMenuItem(
-                    value: '5',
-                    child: customText('By Advocate', size: 16),
-                  ),
-                ],
-                onChanged: (value) {
-                  if (value == '5') {
-                    _fetchSuggestions(
-                      searchBy: value!,
-                      scheema: _selectedLocation,
-                    );
-                  }
-                  setState(() {
-                    _selectedSearchBy = value!;
-                  });
-                },
-                isExpanded: true,
-              ),
-            ),
-
-            const SizedBox(height: 16),
-
-            // Conditionally Rendered Widgets
-            if (_selectedSearchBy == '2' || _selectedSearchBy == '3') ...[
-              _dropdownContainer(
-                child: DropdownButton<String>(
-                  value: _selectedCaseType,
-                  style: TextStyle(color: Colors.white),
-                  dropdownColor: AppColors.accent,
-                  items: [
-                    DropdownMenuItem(
-                      value: '',
-                      child: customText('Select Case Type', size: 16),
-                    ),
-                    DropdownMenuItem(
-                      value: 'CA',
-                      child: customText('Company Appeal', size: 16),
-                    ),
-                    DropdownMenuItem(
-                      value: 'CP',
-                      child: customText('Company Petition', size: 16),
-                    ),
-                    // Add more case types as needed
-                  ],
-                  onChanged: (value) {
-                    setState(() {
-                      _selectedCaseType = value!;
-                    });
-                  },
-                  isExpanded: true,
-                ),
-              ),
-
-              const SizedBox(height: 16),
-
-              if (_selectedSearchBy == '2') ...[
-                _dropdownContainer(
-                  child: DropdownButton<String>(
-                    value: _selectedCaseStatus,
-                    style: TextStyle(color: Colors.white),
-                    dropdownColor: AppColors.accent,
-                    items: [
-                      DropdownMenuItem(
-                        value: '',
-                        child: customText('Select Case Status', size: 16),
-                      ),
-                      DropdownMenuItem(
-                        value: 'all',
-                        child: customText('All', size: 16),
-                      ),
-                      DropdownMenuItem(
-                        value: 'P',
-                        child: customText('Pending', size: 16),
-                      ),
-                      DropdownMenuItem(
-                        value: 'D',
-                        child: customText('Dispose', size: 16),
-                      ),
-                    ],
-                    onChanged: (value) {
-                      setState(() {
-                        _selectedCaseStatus = value!;
-                      });
-                    },
-                    isExpanded: true,
-                  ),
-                ),
-
-                const SizedBox(height: 16),
+      body: ListView(
+        padding: const EdgeInsets.all(16),
+        children: [
+          const CourtBand(
+            title: 'Search official orders',
+            subtitle: 'Same eFiling form as case status  Â·  use numeric case types',
+            icon: Icons.gavel,
+          ),
+          const SizedBox(height: 14),
+          DropdownButtonFormField<String>(
+            isExpanded: true,
+            initialValue: _selectedLocation,
+            decoration: const InputDecoration(labelText: 'Bench'),
+            items: const [
+              DropdownMenuItem(value: 'delhi', child: Text('New Delhi')),
+              DropdownMenuItem(value: 'chennai', child: Text('Chennai')),
+            ],
+            onChanged: (value) => setState(() => _selectedLocation = value!),
+          ),
+          const SizedBox(height: 12),
+          DropdownButtonFormField<String>(
+            isExpanded: true,
+            initialValue: _selectedSearchBy,
+            decoration: const InputDecoration(labelText: 'Search by'),
+            items: const [
+              DropdownMenuItem(value: '1', child: Text('Filing / diary no.')),
+              DropdownMenuItem(value: '2', child: Text('Case type')),
+              DropdownMenuItem(value: '3', child: Text('Case number')),
+              DropdownMenuItem(value: '5', child: Text('Advocate')),
+            ],
+            onChanged: (value) {
+              if (value == '5') {
+                _fetchSuggestions(searchBy: value!, scheema: _selectedLocation);
+              }
+              setState(() => _selectedSearchBy = value!);
+            },
+          ),
+          const SizedBox(height: 12),
+          if (_selectedSearchBy == '2' || _selectedSearchBy == '3') ...[
+            DropdownButtonFormField<String>(
+              isExpanded: true,
+              initialValue: _selectedCaseType,
+              decoration: const InputDecoration(labelText: 'Case type'),
+              items: const [
+                DropdownMenuItem(value: '', child: Text('Select case type')),
+                DropdownMenuItem(value: '32', child: Text('Company Appeal (AT)')),
+                DropdownMenuItem(value: '33', child: Text('Company Appeal (AT)(Ins)')),
+                DropdownMenuItem(value: '34', child: Text('Competition Appeal (AT)')),
+                DropdownMenuItem(value: '35', child: Text('Interlocutory Application')),
+                DropdownMenuItem(value: '36', child: Text('Compensation Application')),
+                DropdownMenuItem(value: '37', child: Text('Contempt Case (AT)')),
+                DropdownMenuItem(value: '38', child: Text('Review Application')),
+                DropdownMenuItem(value: '39', child: Text('Restoration Application')),
+                DropdownMenuItem(value: '40', child: Text('Transfer Appeal')),
+                DropdownMenuItem(value: '61', child: Text('Transfer Original Petition (MRTP-AT)')),
               ],
-            ],
-
-            if (_selectedSearchBy == '3') ...[
-              _textInput(_caseNumberController, 'Case Number'),
-              const SizedBox(height: 16),
-            ],
-
-            if (_selectedSearchBy == '1') ...[
-              _textInput(_diaryNoController, 'Diary Number'),
-              const SizedBox(height: 16),
-            ],
-
-            if (_selectedSearchBy == '5') ...[
-              Autocomplete<String>(
-                optionsBuilder: (TextEditingValue textEditingValue) {
-                  if (textEditingValue.text.isEmpty) {
-                    return const Iterable<String>.empty();
-                  }
-                  return _advocateSuggestions.where(
-                    (option) => option.toLowerCase().contains(
-                      textEditingValue.text.toLowerCase(),
-                    ),
-                  );
-                },
-                fieldViewBuilder: (
-                  context,
-                  controller,
-                  focusNode,
-                  onEditingComplete,
-                ) {
-                  _advocateController = controller;
-                  return _textInput(
-                    controller,
-                    'Advocate Name',
-                    focusNode: focusNode,
-                    onEditingComplete: onEditingComplete,
-                  );
-                },
-                onSelected: (String selection) {
-                  // debugPrint('Selected: $selection');
-                },
-              ),
-              const SizedBox(height: 16),
-            ],
-
-            if (_selectedSearchBy != '1') ...[
-              _dropdownContainer(
-                child: DropdownButton<String>(
-                  value: _selectedCaseYear,
-                  style: TextStyle(color: Colors.white),
-                  dropdownColor: AppColors.accent,
-                  items: [
-                    DropdownMenuItem(
-                      value: '',
-                      child: customText('Select Year', size: 16),
-                    ),
-                    DropdownMenuItem(
-                      value: 'All',
-                      child: customText('All', size: 16),
-                    ),
-                    ...List.generate(10, (index) {
-                      final year = 2025 - index;
-                      return DropdownMenuItem(
-                        value: '$year',
-                        child: customText('$year', size: 16),
-                      );
-                    }),
-                  ],
-                  onChanged: (value) {
-                    setState(() {
-                      _selectedCaseYear = value!;
-                    });
-                  },
-                  isExpanded: true,
-                ),
-              ),
-              const SizedBox(height: 16),
-            ],
-
-            // CAPTCHA
-            if (_captchaImageBytes != null) ...[
-              Row(
-                children: [
-                  Expanded(
-                    child: _textInput(_captchaController, 'Enter CAPTCHA'),
-                  ),
-                  const SizedBox(width: 10),
-                  GestureDetector(
-                    onTap: _loadCaptcha,
-                    child: Image.memory(_captchaImageBytes!, height: 50),
-                  ),
-                ],
-              ),
-            ] else ...[
-              const Center(child: CircularProgressIndicator()),
-            ],
-
-            const SizedBox(height: 20),
-
-            // Submit Button
-            ElevatedButton(
-              style: ElevatedButton.styleFrom(
-                backgroundColor: AppColors.accent,
-                minimumSize: Size(double.infinity, 50),
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(12),
-                ),
-              ),
-              onPressed: _submitForm,
-              child: Text(
-                'Submit',
-                style: TextStyle(fontSize: 16, color: Colors.white),
-              ),
+              onChanged: (value) => setState(() => _selectedCaseType = value!),
             ),
-
-            const SizedBox(height: 20),
-
-            if (_loading) Center(child: CircularProgressIndicator()),
+            const SizedBox(height: 12),
+            if (_selectedSearchBy == '2') ...[
+              DropdownButtonFormField<String>(
+                isExpanded: true,
+                initialValue: _selectedCaseStatus,
+                decoration: const InputDecoration(labelText: 'Status'),
+                items: const [
+                  DropdownMenuItem(value: '', child: Text('Select status')),
+                  DropdownMenuItem(value: 'all', child: Text('All')),
+                  DropdownMenuItem(value: 'P', child: Text('Pending')),
+                  DropdownMenuItem(value: 'D', child: Text('Disposed')),
+                ],
+                onChanged: (value) => setState(() => _selectedCaseStatus = value!),
+              ),
+              const SizedBox(height: 12),
+            ],
           ],
-        ),
+          if (_selectedSearchBy == '3') ...[
+            _textInput(_caseNumberController, 'Case number (serial only)'),
+            const SizedBox(height: 12),
+          ],
+          if (_selectedSearchBy == '1') ...[
+            _textInput(_diaryNoController, 'Filing / diary number'),
+            const SizedBox(height: 12),
+          ],
+          if (_selectedSearchBy == '5') ...[
+            Autocomplete<String>(
+              optionsBuilder: (TextEditingValue textEditingValue) {
+                if (textEditingValue.text.isEmpty) return const Iterable<String>.empty();
+                return _advocateSuggestions.where((option) => option.toLowerCase().contains(textEditingValue.text.toLowerCase()));
+              },
+              fieldViewBuilder: (context, controller, focusNode, onEditingComplete) {
+                _advocateController = controller;
+                return _textInput(controller, 'Advocate name', focusNode: focusNode, onEditingComplete: onEditingComplete);
+              },
+              onSelected: (_) {},
+            ),
+            const SizedBox(height: 12),
+          ],
+          if (_selectedSearchBy != '1') ...[
+            DropdownButtonFormField<String>(
+              isExpanded: true,
+              initialValue: _selectedCaseYear,
+              decoration: const InputDecoration(labelText: 'Year'),
+              items: [
+                const DropdownMenuItem(value: '', child: Text('Select year')),
+                const DropdownMenuItem(value: 'All', child: Text('All')),
+                ...List.generate(15, (index) {
+                  final year = DateTime.now().year - index;
+                  return DropdownMenuItem(value: '$year', child: Text('$year'));
+                }),
+              ],
+              onChanged: (value) => setState(() => _selectedCaseYear = value!),
+            ),
+            const SizedBox(height: 12),
+          ],
+          if (_captchaImageBytes != null)
+            Row(
+              crossAxisAlignment: CrossAxisAlignment.end,
+              children: [
+                Expanded(child: _textInput(_captchaController, 'Captcha')),
+                const SizedBox(width: 10),
+                GestureDetector(
+                  onTap: _loadCaptcha,
+                  child: Container(
+                    height: 52,
+                    padding: const EdgeInsets.all(4),
+                    decoration: BoxDecoration(
+                      color: Colors.white,
+                      borderRadius: BorderRadius.circular(10),
+                      border: Border.all(color: AppColors.outline),
+                    ),
+                    child: Image.memory(_captchaImageBytes!, height: 44),
+                  ),
+                ),
+              ],
+            )
+          else
+            const Padding(
+              padding: EdgeInsets.symmetric(vertical: 12),
+              child: Center(child: CircularProgressIndicator()),
+            ),
+          const SizedBox(height: 18),
+          SizedBox(
+            height: 50,
+            child: ElevatedButton(
+              onPressed: _loading ? null : _submitForm,
+              child: _loading
+                  ? const SizedBox(width: 22, height: 22, child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white))
+                  : const Text('Search'),
+            ),
+          ),
+          SourceFooter(tribunal: 'NCLAT', officialUrl: TribunalSources.officialHome('NCLAT')),
+        ],
       ),
-    );
-  }
-
-  Widget _dropdownContainer({required Widget child}) {
-    return Container(
-      decoration: BoxDecoration(
-        color: AppColors.accent,
-        borderRadius: BorderRadius.circular(12),
-      ),
-      padding: const EdgeInsets.symmetric(vertical: 8.0, horizontal: 16.0),
-      child: child,
     );
   }
 
@@ -461,18 +341,8 @@ class _ViewJudgementOrdersScreenState extends State<ViewJudgementOrdersScreen> {
       controller: controller,
       focusNode: focusNode,
       onEditingComplete: onEditingComplete,
-      decoration: InputDecoration(
-        labelText: label,
-        labelStyle: TextStyle(color: Colors.white70),
-        filled: true,
-        fillColor: AppColors.accent,
-        border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
-        focusedBorder: OutlineInputBorder(
-          borderSide: BorderSide(color: AppColors.accent),
-          borderRadius: BorderRadius.circular(12),
-        ),
-      ),
-      style: TextStyle(color: Colors.white),
+      style: const TextStyle(color: AppColors.textPrimary),
+      decoration: InputDecoration(labelText: label),
     );
   }
 }

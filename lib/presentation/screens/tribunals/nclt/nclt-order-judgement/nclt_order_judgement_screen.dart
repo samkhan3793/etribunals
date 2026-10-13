@@ -1,6 +1,7 @@
 import 'package:etribunals/core/constants/app_colors.dart';
+import 'package:etribunals/core/constants/tribunal_sources.dart';
+import 'package:etribunals/core/widgets/in_app_document_screen.dart';
 import 'package:flutter/material.dart';
-import 'package:url_launcher/url_launcher.dart';
 
 class NCLTOrderJudgementScreen extends StatelessWidget {
   final Map<String, dynamic> caseDetails;
@@ -42,7 +43,7 @@ Widget _buildCaseProceedingDetailsAccordion(Map<String, dynamic> caseData, List<
   return ExpansionTile(
     initiallyExpanded: true,
     title: const Text("Case Proceeding Details", style: TextStyle(fontWeight: FontWeight.bold)),
-    backgroundColor: AppColors.accent,
+    backgroundColor: AppColors.tile,
     shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
     children: caseProceedingList.asMap().entries.map((entry) {
       int index = entry.key + 1; // Start numbering from 1
@@ -96,7 +97,7 @@ Widget _buildCaseProceedingDetailsAccordion(Map<String, dynamic> caseData, List<
               value,
               maxLines: 2,
               overflow: TextOverflow.ellipsis,
-              style: const TextStyle(fontSize: 16, color: AppColors.secondary),
+              style: const TextStyle(fontSize: 16, color: AppColors.textPrimary),
             ),
           ),
         ],
@@ -106,7 +107,7 @@ Widget _buildCaseProceedingDetailsAccordion(Map<String, dynamic> caseData, List<
 
 Widget _buildOrderDownloadRow(String title, String? path) {
   final String pdfUrl = path != null && path.isNotEmpty
-      ? "https://efiling.nclt.gov.in/ordersview.drt?path=$path"
+      ? TribunalSources.ncltOrderPdf(path)
       : "";
 
   return Padding(
@@ -121,15 +122,15 @@ Widget _buildOrderDownloadRow(String title, String? path) {
         Expanded(
           flex: 3,
           child: path != null && path.isNotEmpty
-              ? ElevatedButton.icon(
-                  onPressed: () async {
-                      await launchUrl(Uri.parse(pdfUrl), mode: LaunchMode.externalApplication);
-                  },
-                  icon: const Icon(Icons.picture_as_pdf, color: Colors.white),
-                  label: const Text("View Order"),
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: Colors.blue, // Customize button color
-                    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+              ? Builder(
+                  builder: (context) => ElevatedButton.icon(
+                    onPressed: () => InAppDocumentScreen.open(context, pdfUrl, title: 'Order'),
+                    icon: const Icon(Icons.picture_as_pdf, color: Colors.white),
+                    label: const Text("View Order"),
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: Colors.blue,
+                      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                    ),
                   ),
                 )
               : const Text("N/A"), // Display N/A if no path is available

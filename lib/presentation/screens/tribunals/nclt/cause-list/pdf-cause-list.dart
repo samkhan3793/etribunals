@@ -159,7 +159,7 @@ class _NcltCauseListScreenState extends State<NcltCauseListScreen> {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       DropdownButtonFormField<String>(
-                        value: selectedBench,
+                        initialValue: selectedBench,
                         items: benches.map((b) {
                           return DropdownMenuItem(
                             value: b['value'],

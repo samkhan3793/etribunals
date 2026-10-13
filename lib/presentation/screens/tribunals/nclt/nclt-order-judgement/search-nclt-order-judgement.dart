@@ -1,5 +1,10 @@
+﻿import 'dart:async';
 import 'dart:convert';
 
+import 'package:etribunals/core/constants/app_colors.dart';
+import 'package:etribunals/core/constants/tribunal_sources.dart';
+import 'package:etribunals/core/widgets/court_band.dart';
+import 'package:etribunals/core/widgets/source_footer.dart';
 import 'package:etribunals/presentation/screens/tribunals/nclt/nclt-order-judgement/nclt_order_judgement_search_results_screen.dart';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
@@ -16,17 +21,11 @@ class _SearchNCLTOrderJudgementScreenState
     extends State<SearchNCLTOrderJudgementScreen> {
   final TextEditingController _filingNumberController = TextEditingController();
   final TextEditingController _caseNumberController = TextEditingController();
-  String? _selectedSearchType = 'Select Search Type';
+  String? _selectedSearchType = 'filingnumber';
   String? _selectedBench = '0';
   String? _selectedCaseType = '0';
-  String? _selectedCaseYear = '0';
+  String? _selectedCaseYear;
   bool _isLoading = false;
-
-  final List<String> _searchTypes = [
-    'Select Search Type',
-    'filingnumber',
-    'casenumber'
-  ];
 
   final List<Map<String, String>> _benches = [
     {'value': '0', 'label': 'Select Bench'},
@@ -94,10 +93,38 @@ class _SearchNCLTOrderJudgementScreenState
 
   final List<String> _caseYears = List.generate(
     15,
-    (index) => (2025 - index).toString(),
+    (index) => (DateTime.now().year - index).toString(),
   );
 
+  @override
+  void initState() {
+    super.initState();
+    _selectedCaseYear = _caseYears.first;
+  }
+
+  @override
+  void dispose() {
+    _filingNumberController.dispose();
+    _caseNumberController.dispose();
+    super.dispose();
+  }
+
   Future<void> _submitForm() async {
+    if (_selectedSearchType == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text("Please select a search type")),
+      );
+      return;
+    }
+
+    if (_selectedSearchType == 'casenumber' && (_selectedBench == '0' || _selectedBench == null)) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text("Please select a valid bench")),
+      );
+      return;
+    }
+
+    FocusScope.of(context).unfocus();
     setState(() => _isLoading = true); // Show loader
 
     final Map<String, dynamic> payload = {
@@ -135,8 +162,8 @@ class _SearchNCLTOrderJudgementScreenState
         Navigator.push(
           context,
           MaterialPageRoute(
-            builder:
-                (context) => NCLTOrderJudgementSearcResultsScreen(responseData), // Pass data
+            builder: (context) =>
+                NCLTOrderJudgementSearchResultsScreen(responseData), // Pass data
           ),
         );
       } else {
@@ -150,237 +177,102 @@ class _SearchNCLTOrderJudgementScreenState
     }
   }
 
+  Widget _drop<T>({
+    required T? value,
+    required String label,
+    required List<DropdownMenuItem<T>> items,
+    required ValueChanged<T?> onChanged,
+  }) {
+    return DropdownButtonFormField<T>(
+      isExpanded: true,
+      initialValue: value,
+      decoration: InputDecoration(labelText: label),
+      items: items,
+      onChanged: onChanged,
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        title: const Text("Search NCLT Order/ Judgement"),
-        centerTitle: true,
-        backgroundColor: Colors.white,
-        iconTheme: const IconThemeData(color: Colors.black),
-        titleTextStyle: const TextStyle(color: Colors.black, fontWeight: FontWeight.bold, fontSize: 20),
-        elevation: 1,
-      ),
-      backgroundColor: Colors.white,
-      body: Padding(
-        padding: const EdgeInsets.all(16.0),
-        child:
-            _isLoading
-                ? const Center(child: CircularProgressIndicator())
-                : Column(
-                  children: [
-                    DropdownButtonFormField<String>(
-                      value: _selectedSearchType,
-                      items: _searchTypes.map((type) {
-                        return DropdownMenuItem(
-                          value: type,
-                          child: SizedBox(
-                            width: MediaQuery.of(context).size.width * 0.85,
-                            child: Text(
-                              type.toUpperCase(),
-                              style: const TextStyle(color: Colors.black),
-                              textAlign: TextAlign.start,
-                              overflow: TextOverflow.ellipsis,
-                            ),
-                          ),
-                        );
-                      }).toList(),
-                      onChanged: (value) => setState(() => _selectedSearchType = value),
-                      decoration: const InputDecoration(
-                        labelText: "Select Search Type",
-                        border: OutlineInputBorder(
-                          borderRadius: BorderRadius.all(Radius.circular(8.0)),
-                        ),
-                        isDense: true,
-                      ),
-                      dropdownColor: Colors.white,
-                      isExpanded: true,
-                      menuMaxHeight: MediaQuery.of(context).size.height * 0.4,
-                    ),
-
-                    const SizedBox(height: 20),
-                    if (_selectedSearchType == 'filingnumber')
-                      TextField(
-                        controller: _filingNumberController,
-                        decoration: const InputDecoration(
-                          labelText: "Enter Filing Number",
-                          border: OutlineInputBorder(
-                            borderRadius: BorderRadius.all(
-                              Radius.circular(8.0),
-                            ),
-                          ),
-                        ),
-                      ),
-                    const SizedBox(height: 20),
-                    if (_selectedSearchType == 'casenumber') ...[
-                      DropdownButtonFormField<String>(
-                        value: _selectedBench,
-                        items:
-                            _benches.map((bench) {
-                              return DropdownMenuItem(
-                                value: bench['value'],
-                                child: SizedBox(
-                                  width:
-                                      MediaQuery.of(context).size.width *
-                                      0.85, // Adjust width dynamically
-                                  child: Text(
-                                    bench['label']!,
-                                    style: const TextStyle(color: Colors.black),
-                                    textAlign:
-                                        TextAlign.start, // Left alignment
-                                    overflow:
-                                        TextOverflow
-                                            .ellipsis, // Prevents overflow text issue
-                                  ),
-                                ),
-                              );
-                            }).toList(),
-                        onChanged:
-                            (value) => setState(() => _selectedBench = value),
-                        decoration: const InputDecoration(
-                          labelText: "Select Bench",
-                          border: OutlineInputBorder(
-                            borderRadius: BorderRadius.all(
-                              Radius.circular(8.0),
-                            ),
-                          ),
-                          isDense: true, // Reduces extra spacing
-                        ),
-                        dropdownColor: Colors.white,
-                        isExpanded: true, // Avoids overlap issues
-                        menuMaxHeight:
-                            MediaQuery.of(context).size.height *
-                            0.4, // Limits dropdown height dynamically
-                      ),
-
-                      const SizedBox(height: 20),
-                      DropdownButtonFormField<String>(
-                        value: _selectedCaseType,
-                        items:
-                            _caseTypes.map((caseType) {
-                              return DropdownMenuItem(
-                                value: caseType['value'],
-                                child: SizedBox(
-                                  width:
-                                      MediaQuery.of(context).size.width *
-                                      0.85, // Adjust width dynamically
-                                  child: Text(
-                                    caseType['label']!,
-                                    style: const TextStyle(color: Colors.black),
-                                    textAlign:
-                                        TextAlign
-                                            .start, // Ensures left alignment
-                                    overflow:
-                                        TextOverflow
-                                            .ellipsis, // Prevents overflow text issue
-                                  ),
-                                ),
-                              );
-                            }).toList(),
-                        onChanged:
-                            (value) =>
-                                setState(() => _selectedCaseType = value),
-                        decoration: const InputDecoration(
-                          labelText: "Select Case Type",
-                          border: OutlineInputBorder(
-                            borderRadius: BorderRadius.all(
-                              Radius.circular(8.0),
-                            ),
-                          ),
-                          isDense: true, // Reduces extra spacing
-                        ),
-                        dropdownColor: Colors.white,
-                        isExpanded: true, // Avoids overlap issues
-                        menuMaxHeight:
-                            MediaQuery.of(context).size.height *
-                            0.4, // Limits dropdown height dynamically
-                      ),
-
-                      const SizedBox(height: 20),
-                      TextField(
-                        controller: _caseNumberController,
-                        decoration: const InputDecoration(
-                          labelText: "Enter Case Number",
-                          border: OutlineInputBorder(
-                            borderRadius: BorderRadius.all(
-                              Radius.circular(8.0),
-                            ),
-                          ),
-                        ),
-                      ),
-                      const SizedBox(height: 20),
-                      DropdownButtonFormField<String>(
-                        value:
-                            _selectedCaseYear != null &&
-                                    _caseYears.contains(_selectedCaseYear)
-                                ? _selectedCaseYear
-                                : (_caseYears.isNotEmpty
-                                    ? _caseYears.first
-                                    : null), // Prevents null exceptions
-                        items:
-                            _caseYears.map((year) {
-                              return DropdownMenuItem(
-                                value: year,
-                                child: SizedBox(
-                                  width:
-                                      MediaQuery.of(context).size.width *
-                                      0.85, // Adjust width dynamically
-                                  child: Text(
-                                    year,
-                                    style: const TextStyle(color: Colors.black),
-                                    textAlign:
-                                        TextAlign.start, // Left alignment
-                                    overflow:
-                                        TextOverflow
-                                            .ellipsis, // Prevents overflow text issue
-                                  ),
-                                ),
-                              );
-                            }).toList(),
-                        onChanged:
-                            (value) =>
-                                setState(() => _selectedCaseYear = value),
-                        decoration: const InputDecoration(
-                          labelText: "Select Case Year",
-                          border: OutlineInputBorder(
-                            borderRadius: BorderRadius.all(
-                              Radius.circular(8.0),
-                            ),
-                          ),
-                          isDense: true, // Reduces extra spacing
-                        ),
-                        dropdownColor: Colors.white,
-                        isExpanded: true, // Avoids overlap issues
-                        menuMaxHeight:
-                            MediaQuery.of(context).size.height *
-                            0.4, // Limits dropdown height dynamically
-                      ),
-                    ],
-                    const SizedBox(height: 20),
-                    ElevatedButton(
-                      onPressed: _submitForm,
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: Colors.blue.shade100,
-                        foregroundColor: Colors.black,
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: 24,
-                          vertical: 12,
-                        ),
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(8.0),
-                        ),
-                        elevation: 2,
-                      ),
-                      child: const Text(
-                        "Search Case Status",
-                        style: TextStyle(
-                          fontSize: 16,
-                          fontWeight: FontWeight.bold,
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
+      backgroundColor: AppColors.secondary,
+      appBar: AppBar(title: const Text('NCLT judgements / orders')),
+      body: ListView(
+        padding: const EdgeInsets.all(16),
+        children: [
+          const CourtBand(
+            title: 'Search official orders',
+            subtitle: 'Same eFiling search as case status  Â·  then open PDFs in-app',
+            icon: Icons.gavel,
+          ),
+          const SizedBox(height: 14),
+          _drop<String>(
+            value: _selectedSearchType,
+            label: 'Search by',
+            onChanged: (value) {
+              setState(() {
+                _selectedSearchType = value;
+                _filingNumberController.clear();
+                _caseNumberController.clear();
+                _selectedBench = '0';
+                _selectedCaseType = '0';
+                _selectedCaseYear = _caseYears.first;
+              });
+            },
+            items: const [
+              DropdownMenuItem(value: 'filingnumber', child: Text('Filing / diary no.')),
+              DropdownMenuItem(value: 'casenumber', child: Text('Case number')),
+            ],
+          ),
+          const SizedBox(height: 12),
+          if (_selectedSearchType == 'filingnumber')
+            TextField(
+              controller: _filingNumberController,
+              decoration: const InputDecoration(labelText: 'Filing number'),
+            ),
+          if (_selectedSearchType == 'casenumber') ...[
+            _drop<String>(
+              value: _selectedBench,
+              label: 'Bench',
+              onChanged: (value) => setState(() => _selectedBench = value),
+              items: _benches
+                  .map((b) => DropdownMenuItem(value: b['value'], child: Text(b['label']!)))
+                  .toList(),
+            ),
+            const SizedBox(height: 12),
+            _drop<String>(
+              value: _selectedCaseType,
+              label: 'Case type',
+              onChanged: (value) => setState(() => _selectedCaseType = value),
+              items: _caseTypes
+                  .map((c) => DropdownMenuItem(value: c['value'], child: Text(c['label']!)))
+                  .toList(),
+            ),
+            const SizedBox(height: 12),
+            TextField(
+              controller: _caseNumberController,
+              decoration: const InputDecoration(labelText: 'Case number (serial only)'),
+            ),
+            const SizedBox(height: 12),
+            _drop<String>(
+              value: _selectedCaseYear,
+              label: 'Year',
+              onChanged: (value) => setState(() => _selectedCaseYear = value),
+              items: _caseYears.map((y) => DropdownMenuItem(value: y, child: Text(y))).toList(),
+            ),
+          ],
+          const SizedBox(height: 18),
+          SizedBox(
+            height: 50,
+            child: ElevatedButton(
+              onPressed: _isLoading ? null : _submitForm,
+              child: _isLoading
+                  ? const SizedBox(width: 22, height: 22, child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white))
+                  : const Text('Search'),
+            ),
+          ),
+          SourceFooter(tribunal: 'NCLT', officialUrl: TribunalSources.officialHome('NCLT')),
+        ],
       ),
     );
   }

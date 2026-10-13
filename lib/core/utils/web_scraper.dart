@@ -1,7 +1,8 @@
-import 'dart:convert';
+﻿import 'dart:convert';
 import 'dart:developer';
 import 'dart:io';
 
+import 'package:etribunals/core/utils/drupal_listing.dart';
 import 'package:html_unescape/html_unescape.dart';
 import 'package:http/http.dart' as http;
 import 'package:html/parser.dart' as html_parser;
@@ -23,7 +24,7 @@ Future<List<Map<String, dynamic>>> fetchCauseListTable(
   );
 
   try {
-    final response = await http.get(url);
+    final response = await http.get(url).timeout(const Duration(seconds: 25));
 
     if (response.statusCode == 200) {
       final document = html_parser.parse(response.body);
@@ -79,6 +80,20 @@ String decodeHtmlUnicode(String input) {
   return unescape.convert(input);
 }
 
+Future<List<Map<String, dynamic>>> _getNclatTable(
+  String path, [
+  Map<String, String>? query,
+]) async {
+  final uri = Uri.https('nclat.nic.in', path, query);
+  final response = await http.get(uri).timeout(const Duration(seconds: 25));
+  if (response.statusCode != 200) {
+    throw Exception('Failed to load $path (${response.statusCode})');
+  }
+  final data = parseHtmlDataTable(response.body);
+  if (data.isEmpty) throw Exception('HTML table not found.');
+  return data;
+}
+
 Future<List<Map<String, dynamic>>> fetchJudgementOrderPriorMay2021ListTable(
   String courtName,
   String startDate,
@@ -102,7 +117,7 @@ Future<List<Map<String, dynamic>>> fetchJudgementOrderPriorMay2021ListTable(
   };
 
   try {
-    final response = await http.post(url, body: body);
+    final response = await http.post(url, body: body).timeout(const Duration(seconds: 25));
 
     if (response.statusCode == 200) {
       final List<dynamic> jsonResponse = jsonDecode(response.body);
@@ -173,88 +188,14 @@ Future<List<Map<String, dynamic>>> fetchDailyOrderPriorMay2021ListTable(
   String startDate,
   String endDate,
 ) async {
-  final url = Uri.parse(
-    'https://nclat.nic.in/views/ajax?_wrapper_format=drupal_ajax',
-  );
-  if (courtName == 'All') {
-    courtName = ''; // Default value for all courts
-  }
-  final body = {
-    'field_final_court_value':
-        courtName, // Dynamically use the selected courtName
-    'field_final_date_value[min]': startDate, // Dynamically use the startDate
-    'field_final_date_value[max]': endDate, // Dynamically use the endDate
-    'view_name': 'daily_orders_data',
-    'view_display_id': 'block_4',
-    'view_path': '/node/163',
-    '_drupal_ajax': '1',
+  final query = <String, String>{
+    'field_final_date_value[min]': startDate.isEmpty ? '2016-01-01' : startDate,
+    'field_final_date_value[max]': endDate.isEmpty ? '2021-05-31' : endDate,
   };
-
-  try {
-    final response = await http.post(url, body: body);
-
-    if (response.statusCode == 200) {
-      final List<dynamic> jsonResponse = jsonDecode(response.body);
-
-      final rawHtml =
-          jsonResponse.firstWhere(
-                (item) =>
-                    item is Map &&
-                    item.containsKey('data') &&
-                    (item['data'] as String).contains('<table'),
-                orElse: () => null,
-              )?['data']
-              as String?;
-
-      if (rawHtml == null) throw Exception('HTML table not found.');
-
-      final decodedHtml = decodeHtmlUnicode(rawHtml);
-
-      final document = html_parser.parse(decodedHtml);
-      final table = document.querySelector('table');
-      if (table == null) throw Exception('No table found.');
-
-      final headers =
-          table
-              .querySelectorAll('thead tr th')
-              .map((e) => e.text.trim())
-              .toList();
-      final rows = table.querySelectorAll('tbody tr');
-
-      final List<Map<String, dynamic>> data = [];
-
-      for (var row in rows) {
-        final cells = row.querySelectorAll('td');
-        if (cells.isEmpty) continue;
-
-        final Map<String, dynamic> rowData = {};
-        for (int i = 0; i < cells.length && i < headers.length; i++) {
-          final header = headers[i];
-          final cell = cells[i];
-
-          final anchor = cell.querySelector('a');
-          if (anchor != null && anchor.attributes.containsKey('href')) {
-            final href = anchor.attributes['href']!;
-            final fullUrl =
-                href.startsWith('.')
-                    ? 'https://nclat.nic.in${href.substring(1)}'
-                    : href;
-            rowData[header] = {'label': anchor.text.trim(), 'url': fullUrl};
-          } else {
-            rowData[header] = cell.text.trim();
-          }
-        }
-        data.add(rowData);
-      }
-
-      return data;
-    } else {
-      throw Exception('Failed to load data: ${response.statusCode}');
-    }
-  } catch (e) {
-    print('Error occurred: $e');
-    rethrow;
+  if (courtName.isNotEmpty && courtName != 'All') {
+    query['field_final_court_value'] = courtName;
   }
+  return _getNclatTable('/daily-order-data', query);
 }
 
 Future<List<Map<String, dynamic>>>
@@ -263,85 +204,7 @@ fetchRegistrarDailyOrderPriorMay2021ListTable(
   String startDate,
   String endDate,
 ) async {
-  final url = Uri.parse(
-    'https://nclat.nic.in/views/ajax?_wrapper_format=drupal_ajax',
-  );
-  final body = {
-    'field_final_court_value':
-        'Registrar Court', // Dynamically use the selected courtName
-    'field_final_date_value': startDate, // Dynamically use the startDate
-    'field_final_date_value_1': endDate, // Dynamically use the endDate
-    'view_name': 'daily_orders_registrar_court',
-    'view_display_id': 'block_3',
-    'view_path': '/quicktabs/ajax/daily_orders_registrar_court/2',
-    '_drupal_ajax': '1',
-  };
-
-  try {
-    final response = await http.post(url, body: body);
-
-    if (response.statusCode == 200) {
-      final List<dynamic> jsonResponse = jsonDecode(response.body);
-
-      final rawHtml =
-          jsonResponse.firstWhere(
-                (item) =>
-                    item is Map &&
-                    item.containsKey('data') &&
-                    (item['data'] as String).contains('<table'),
-                orElse: () => null,
-              )?['data']
-              as String?;
-
-      if (rawHtml == null) throw Exception('HTML table not found.');
-
-      final decodedHtml = decodeHtmlUnicode(rawHtml);
-
-      final document = html_parser.parse(decodedHtml);
-      final table = document.querySelector('table');
-      if (table == null) throw Exception('No table found.');
-
-      final headers =
-          table
-              .querySelectorAll('thead tr th')
-              .map((e) => e.text.trim())
-              .toList();
-      final rows = table.querySelectorAll('tbody tr');
-
-      final List<Map<String, dynamic>> data = [];
-
-      for (var row in rows) {
-        final cells = row.querySelectorAll('td');
-        if (cells.isEmpty) continue;
-
-        final Map<String, dynamic> rowData = {};
-        for (int i = 0; i < cells.length && i < headers.length; i++) {
-          final header = headers[i];
-          final cell = cells[i];
-
-          final anchor = cell.querySelector('a');
-          if (anchor != null && anchor.attributes.containsKey('href')) {
-            final href = anchor.attributes['href']!;
-            final fullUrl =
-                href.startsWith('.')
-                    ? 'https://nclat.nic.in${href.substring(1)}'
-                    : href;
-            rowData[header] = {'label': anchor.text.trim(), 'url': fullUrl};
-          } else {
-            rowData[header] = cell.text.trim();
-          }
-        }
-        data.add(rowData);
-      }
-
-      return data;
-    } else {
-      throw Exception('Failed to load data: ${response.statusCode}');
-    }
-  } catch (e) {
-    print('Error occurred: $e');
-    rethrow;
-  }
+  return _getNclatTable('/orders/daily-orders-registrar-court');
 }
 
 Future<List<Map<String, dynamic>>> fetchNoticeListTable(
@@ -349,85 +212,10 @@ Future<List<Map<String, dynamic>>> fetchNoticeListTable(
   String startDate,
   String endDate,
 ) async {
-  final url = Uri.parse(
-    'https://nclat.nic.in/views/ajax?_wrapper_format=drupal_ajax',
-  );
-  final body = {
-    'title': '', // Dynamically use the selected courtName
-    'field_final_date_value': startDate, // Dynamically use the startDate
-    'field_final_date_value_1': endDate, // Dynamically use the endDate
-    'view_name': 'nc_notice_data',
-    'view_display_id': 'page_1',
-    'view_path': '/nclat-notice',
-    'view_base_path': '/nclat-notice',
-    '_drupal_ajax': '1',
-  };
-
-  try {
-    final response = await http.post(url, body: body);
-
-    if (response.statusCode == 200) {
-      final List<dynamic> jsonResponse = jsonDecode(response.body);
-
-      final rawHtml =
-          jsonResponse.firstWhere(
-                (item) =>
-                    item is Map &&
-                    item.containsKey('data') &&
-                    (item['data'] as String).contains('<table'),
-                orElse: () => null,
-              )?['data']
-              as String?;
-
-      if (rawHtml == null) throw Exception('HTML table not found.');
-
-      final decodedHtml = decodeHtmlUnicode(rawHtml);
-
-      final document = html_parser.parse(decodedHtml);
-      final table = document.querySelector('table');
-      if (table == null) throw Exception('No table found.');
-
-      final headers =
-          table
-              .querySelectorAll('thead tr th')
-              .map((e) => e.text.trim())
-              .toList();
-      final rows = table.querySelectorAll('tbody tr');
-
-      final List<Map<String, dynamic>> data = [];
-
-      for (var row in rows) {
-        final cells = row.querySelectorAll('td');
-        if (cells.isEmpty) continue;
-
-        final Map<String, dynamic> rowData = {};
-        for (int i = 0; i < cells.length && i < headers.length; i++) {
-          final header = headers[i];
-          final cell = cells[i];
-
-          final anchor = cell.querySelector('a');
-          if (anchor != null && anchor.attributes.containsKey('href')) {
-            final href = anchor.attributes['href']!;
-            final fullUrl =
-                href.startsWith('.')
-                    ? 'https://nclat.nic.in${href.substring(1)}'
-                    : href;
-            rowData[header] = {'label': anchor.text.trim(), 'url': fullUrl};
-          } else {
-            rowData[header] = cell.text.trim();
-          }
-        }
-        data.add(rowData);
-      }
-
-      return data;
-    } else {
-      throw Exception('Failed to load data: ${response.statusCode}');
-    }
-  } catch (e) {
-    print('Error occurred: $e');
-    rethrow;
-  }
+  final query = <String, String>{};
+  if (startDate.isNotEmpty) query['field_final_date_value'] = startDate;
+  if (endDate.isNotEmpty) query['field_final_date_value_2'] = endDate;
+  return _getNclatTable('/nclat-notice', query.isEmpty ? null : query);
 }
 
 // Dropdown value for circular order
@@ -436,61 +224,13 @@ Future<List<Map<String, dynamic>>> fetchCircularOrderNoticeListTable(
   String startDate,
   String title,
 ) async {
-  final url = Uri.parse(
-    'https://nclat.nic.in/circulars-orders?title=&field_circular_category_target_id=$dropdownValue&field_date_value=$startDate&page=0',
-  );
-  try {
-    final response = await http.get(url);
-
-    if (response.statusCode == 200) {
-      final document = html_parser.parse(response.body);
-
-      final table = document.querySelector('table');
-      if (table == null) {
-        throw Exception('No table found on the page.');
-      }
-
-      final headers =
-          table
-              .querySelectorAll('thead tr th')
-              .map((e) => e.text.trim())
-              .toList();
-      final rows = table.querySelectorAll('tbody tr');
-
-      final List<Map<String, dynamic>> data = [];
-
-      for (var row in rows) {
-        final cells = row.querySelectorAll('td');
-        if (cells.isEmpty) continue;
-
-        final Map<String, dynamic> rowData = {};
-        for (int i = 0; i < cells.length && i < headers.length; i++) {
-          final header = headers[i];
-          final cell = cells[i];
-
-          // Check if this is the View/Download column with an <a> tag
-          final anchor = cell.querySelector('a');
-          if (anchor != null && anchor.attributes.containsKey('href')) {
-            final href = anchor.attributes['href']!;
-            final label = anchor.text.trim();
-            rowData[header] = {'label': label, 'url': href};
-          } else {
-            rowData[header] = cell.text.trim();
-          }
-        }
-        data.add(rowData);
-      }
-
-      return data;
-    } else {
-      throw Exception('No Data Found: ${response.statusCode}');
-    }
-  } catch (e) {
-    print('Error fetching or parsing Circulat/Order/Notification list: $e');
-    rethrow;
-  }
+  final query = <String, String>{
+    'title': title,
+    'field_circular_category_target_id': dropdownValue,
+  };
+  if (startDate.isNotEmpty) query['field_date_value'] = startDate;
+  return _getNclatTable('/circulars-orders', query);
 }
-
 // Dropdown value for Act and Rules
 Future<List<Map<String, dynamic>>> fetchActsAndRulesListTable(
   String dropdownValue,
@@ -501,7 +241,7 @@ Future<List<Map<String, dynamic>>> fetchActsAndRulesListTable(
     'https://nclat.nic.in/act-rules?field_acts_rules_category_t_target_id=$dropdownValue',
   );
   try {
-    final response = await http.get(url);
+    final response = await http.get(url).timeout(const Duration(seconds: 25));
 
     if (response.statusCode == 200) {
       final document = html_parser.parse(response.body);
@@ -556,7 +296,7 @@ Future<List<Map<String, dynamic>>> fetchDisplayBoardListTable() async {
   final url = Uri.parse('https://nclat.nic.in/display-board/');
 
   try {
-    final response = await http.get(url);
+    final response = await http.get(url).timeout(const Duration(seconds: 25));
 
     if (response.statusCode != 200) {
       throw Exception('Failed to fetch data: ${response.statusCode}');
@@ -637,10 +377,10 @@ Future<List<Map<String, dynamic>>> fetchCauseList(
     'captcha_response': captchaResponse,
   };
 
-  final uri = Uri.https('nclt.gov.in', '/all-couse-list', queryParams);
+  final uri = Uri.https('nclt.gov.in', '/all-cause-list', queryParams);
   
   try {
-    final response = await http.get(uri);
+    final response = await http.get(uri).timeout(const Duration(seconds: 25));
 
     if (response.statusCode != 200) {
       throw Exception('Failed to fetch data: ${response.statusCode}');
@@ -692,7 +432,7 @@ Future<List<Map<String, dynamic>>> fetchNCLTDisplayBoardListTable(String locatio
   final url = Uri.parse('https://nclt.gov.in/dBWeb/?locationCode=$locationId');
 
   try {
-    final response = await http.get(url);
+    final response = await http.get(url).timeout(const Duration(seconds: 25));
 
     if (response.statusCode != 200) {
       throw Exception('Failed to fetch data: ${response.statusCode}');
@@ -761,7 +501,7 @@ Future<String?> fetchCsrfToken() async {
   try {
     final response = await http.get(url, headers: {
       'User-Agent': 'Mozilla/5.0',
-    });
+    }).timeout(const Duration(seconds: 25));
 
     if (response.statusCode == 200) {
       final document = html_parser.parse(response.body);
@@ -800,7 +540,7 @@ Future<void> fetchUpreatCauseList(String startDate, String endDate) async {
         'date_to': endDate,
         'token': csrfToken,
       },
-    );
+    ).timeout(const Duration(seconds: 25));
 
     if (response.statusCode == 200) {
       print('Cause List Response: ${response.body}');
@@ -813,7 +553,7 @@ Future<void> fetchUpreatCauseList(String startDate, String endDate) async {
 }
 
 Future<List<Map<String, dynamic>>> fetchNgtCauseListTable(String benchName, int page) async {
-  final url = Uri.parse('https://greentribunal.gov.in/$benchName?page=$page');
+  final url = Uri.parse('https://www.greentribunal.gov.in/$benchName?page=$page');
 
   log("Fetching NGT Cause List for Bench: $benchName");
   log("Request URL: $url");
@@ -852,7 +592,10 @@ Future<List<Map<String, dynamic>>> fetchNgtCauseListTable(String benchName, int 
           if (anchor != null && anchor.attributes.containsKey('href')) {
             final href = anchor.attributes['href']!;
             final label = anchor.text.trim();
-            rowData[header] = {'label': label, 'url': href};
+            rowData[header] = {
+              'label': label.isEmpty ? 'Open' : label,
+              'url': absoluteUrl(href, host: 'https://www.greentribunal.gov.in'),
+            };
           } else {
             rowData[header] = cell.text.trim();
           }

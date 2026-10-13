@@ -16,11 +16,12 @@ class PdfViewScreen extends StatelessWidget {
         child: ElevatedButton(
           onPressed: () async {
             final Uri url = Uri.parse(pdfUrl);
-            if (await canLaunchUrl(url)) {
-              await launchUrl(url, mode: LaunchMode.externalApplication);
-            } else {
+            try {
+              final bool launched = await launchUrl(url, mode: LaunchMode.platformDefault);
+              if (!launched) throw 'Could not launch.';
+            } catch (e) {
               ScaffoldMessenger.of(context).showSnackBar(
-                SnackBar(content: Text('Could not launch PDF.')),
+                SnackBar(content: Text('Error: Could not launch PDF viewer.')),
               );
             }
           },

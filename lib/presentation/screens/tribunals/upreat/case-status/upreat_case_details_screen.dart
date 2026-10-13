@@ -1,5 +1,12 @@
+import 'dart:convert';
+
+import 'package:etribunals/core/constants/app_colors.dart';
+import 'package:etribunals/core/constants/tribunal_sources.dart';
+import 'package:etribunals/core/widgets/bookmark_icon_button.dart';
+import 'package:etribunals/core/widgets/court_band.dart';
+import 'package:etribunals/core/widgets/in_app_document_screen.dart';
+import 'package:etribunals/data/model/bookmarked_case.dart';
 import 'package:flutter/material.dart';
-import 'package:url_launcher/url_launcher.dart';
 
 class UpreatCaseDetailsScreen extends StatelessWidget {
   final Map<String, dynamic> upreatCaseDetails;
@@ -21,19 +28,38 @@ class UpreatCaseDetailsScreen extends StatelessWidget {
     return Scaffold(
       appBar: AppBar(
         title: const Text("Full Case Details"),
-        backgroundColor: Colors.white,
+        backgroundColor: AppColors.primary,
         centerTitle: true,
-        iconTheme: const IconThemeData(color: Colors.black),
-        titleTextStyle: const TextStyle(color: Colors.black, fontWeight: FontWeight.bold, fontSize: 20),
-        elevation: 1,
+        actions: [
+          BookmarkIconButton(
+            caseItem: BookmarkedCase(
+              id: BookmarkedCase.makeId('UPREAT', caseData["filing_no"]?.toString() ?? ''),
+              tribunal: 'UPREAT',
+              filingNo: caseData["filing_no"]?.toString() ?? '',
+              caseNo: caseData["case_no"]?.toString() ?? '',
+              title: "${caseData["case_title1"] ?? ""} vs ${caseData["case_title2"] ?? ""}".trim(),
+              nextHearing: caseData["next_list_date"]?.toString(),
+              savedAt: DateTime.now().millisecondsSinceEpoch,
+              payloadKind: 'upreat_json',
+              payload: jsonEncode(upreatCaseDetails),
+              sourceUrl: TribunalSources.officialHome('UPREAT'),
+            ),
+          ),
+        ],
       ),
-      backgroundColor: Colors.white,
+      backgroundColor: AppColors.secondary,
       body: SingleChildScrollView(
         child: Padding(
           padding: const EdgeInsets.all(16.0),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
+              CourtBand(
+                title: (caseData['case_no'] ?? caseData['filing_no'] ?? 'UPREAT case').toString(),
+                subtitle: '${caseData["case_title1"] ?? ""} vs ${caseData["case_title2"] ?? ""}'.trim(),
+                icon: Icons.folder_open,
+              ),
+              const SizedBox(height: 12),
               _buildAccordionContainer(_buildMainCaseAccordion(caseData,allproceedingdtlsData)),
               const SizedBox(height: 15),
               _buildAccordionContainer(_buildCurrentCaseDetailsAccordion(finalStatusData, allproceedingdtlsData)),
@@ -314,7 +340,7 @@ Widget _buildCaseProceedingDetailsAccordion(Map<String, dynamic> caseData, List<
 
 Widget _buildOrderDownloadRow(String title, String? path) {
   final String pdfUrl = path != null && path.isNotEmpty
-      ? "https://efiling.nclt.gov.in/ordersview.drt?path=$path"
+      ? TribunalSources.upreatOrderPdf(path)
       : "";
 
   return Padding(
@@ -329,15 +355,15 @@ Widget _buildOrderDownloadRow(String title, String? path) {
         Expanded(
           flex: 3,
           child: path != null && path.isNotEmpty
-              ? ElevatedButton.icon(
-                  onPressed: () async {
-                      await launchUrl(Uri.parse(pdfUrl), mode: LaunchMode.externalApplication);
-                  },
-                  icon: const Icon(Icons.picture_as_pdf, color: Colors.red),
-                  label: const Text("View Order", style: TextStyle(color: Colors.black)),
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: Colors.grey.shade200,
-                    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+              ? Builder(
+                  builder: (context) => ElevatedButton.icon(
+                    onPressed: () => InAppDocumentScreen.open(context, pdfUrl, title: 'Order'),
+                    icon: const Icon(Icons.picture_as_pdf, color: Colors.red),
+                    label: const Text("View Order", style: TextStyle(color: Colors.black)),
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: Colors.grey.shade200,
+                      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                    ),
                   ),
                 )
               : const Text("N/A", style: TextStyle(color: Colors.black54)),

@@ -1,7 +1,8 @@
-import 'package:etribunals/presentation/screens/tribunals/nclat/displayboard/view-details-screen.dart';
+﻿import 'package:etribunals/presentation/screens/tribunals/nclat/displayboard/view-details-screen.dart';
 import 'package:flutter/material.dart';
 import 'package:etribunals/core/constants/app_colors.dart';
-import 'package:etribunals/core/widgets/common_widgets.dart';
+import 'package:etribunals/core/widgets/case_summary_card.dart';
+import 'package:etribunals/core/widgets/court_band.dart';
 import 'package:etribunals/core/utils/web_scraper.dart';
 class DisplayBoardScreen extends StatefulWidget {
   const DisplayBoardScreen({super.key});
@@ -43,100 +44,64 @@ class _DisplayBoardScreenState extends State<DisplayBoardScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: AppColors.secondary,
-      appBar: AppBar(
-        title: customText("Display Board List", size: 20, color: AppColors.white),
-        backgroundColor: AppColors.primary,
-      ),
-      body: GestureDetector(
-        onHorizontalDragEnd: (details) {
-          if (details.primaryVelocity! < 0) { // Left swipe detected
-            _loadDisplayBoard();
-          }
-        },
-        child: RefreshIndicator(
-          onRefresh: _loadDisplayBoard,
-          color: AppColors.primary,
-          child: _isLoading
-              ? const Center(child: CircularProgressIndicator())
-              : _error != null
-                  ? Center(child: customText(_error!, size: 16, color: Colors.red))
-                  : _tableData.isEmpty
-                      ? Center(child: customText("No data found."))
-                      : ListView.builder(
-                          padding: const EdgeInsets.all(16.0),
-                          itemCount: _tableData.length,
-                          itemBuilder: (context, index) {
-                            final row = _tableData[index];
-                            return Card(
-                              color: Colors.white,
-                              margin: const EdgeInsets.symmetric(vertical: 8.0),
-                              elevation: 5,
-                              shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(12),
-                              ),
-                              child: Padding(
-                                padding: const EdgeInsets.all(12.0),
-                                child: Column(
-                                  crossAxisAlignment: CrossAxisAlignment.start,
-                                  children: row.entries.map((entry) {
-                                    return Padding(
-                                      padding: const EdgeInsets.symmetric(vertical: 4.0),
-                                      child: Row(
-                                        crossAxisAlignment: CrossAxisAlignment.start,
-                                        children: [
-                                          Text(
-                                            "${entry.key}: ",
-                                            style: const TextStyle(fontWeight: FontWeight.bold, color: Colors.black),
-                                          ),
-                                          const SizedBox(width: 8),
-                                          Expanded(
-                                            child: entry.value is Map<String, dynamic> && entry.value.containsKey('url')
-                                                ? _buildViewButton(entry.value) // Updated function call
-                                                : Text(
-                                                    entry.value.toString(),
-                                                    style: const TextStyle(color: Colors.black87),
-                                                  ),
-                                          ),
-                                        ],
-                                      ),
-                                    );
-                                  }).toList(),
-                                ),
-                              ),
+      appBar: AppBar(title: const Text('NCLAT display board')),
+      body: RefreshIndicator(
+        onRefresh: _loadDisplayBoard,
+        child: _isLoading
+            ? const Center(child: CircularProgressIndicator())
+            : _error != null
+                ? ListView(children: [Padding(padding: const EdgeInsets.all(24), child: Text(_error!, textAlign: TextAlign.center))])
+                : _tableData.isEmpty
+                    ? ListView(children: const [Padding(padding: EdgeInsets.all(24), child: Text('No sitting listed', textAlign: TextAlign.center))])
+                    : ListView.separated(
+                        padding: const EdgeInsets.all(16),
+                        itemCount: _tableData.length + 1,
+                        separatorBuilder: (_, __) => const SizedBox(height: 12),
+                        itemBuilder: (context, index) {
+                          if (index == 0) {
+                            return const CourtBand(
+                              title: 'Todayâ€™s board',
+                              subtitle: 'Official nclat.nic.in  Â·  pull to refresh',
+                              icon: Icons.tv_outlined,
                             );
-                          },
-                        ),
-        ),
+                          }
+                          final row = _tableData[index - 1];
+                          String textOf(String key) {
+                            final v = row[key];
+                            if (v == null) return '';
+                            if (v is Map) return (v['label'] ?? v['text'] ?? '').toString();
+                            return v.toString();
+                          }
+
+                          Map<String, dynamic>? action;
+                          for (final v in row.values) {
+                            if (v is Map && v.containsKey('url')) {
+                              action = Map<String, dynamic>.from(v);
+                              break;
+                            }
+                          }
+
+                          return CaseSummaryCard(
+                            fields: {
+                              'Case no.': textOf('Case No.'),
+                              'Party': textOf('Cause Title'),
+                              'Status': textOf('Item No.'),
+                              'Court': textOf('Court Name').isEmpty ? textOf('Court') : textOf('Court Name'),
+                            },
+                            actionLabel: action == null ? 'No list' : (action['label']?.toString() ?? 'View'),
+                            loading: false,
+                            onAction: () {
+                              final url = action?['url']?.toString();
+                              if (url == null || url.isEmpty) return;
+                              Navigator.push(
+                                context,
+                                MaterialPageRoute(builder: (_) => ViewDetailsScreen(requestUrl: url)),
+                              );
+                            },
+                          );
+                        },
+                      ),
       ),
     );
-  }
-
-  /// Updated function to navigate to `ViewDetailsScreen`
-  Widget _buildViewButton(Map<String, dynamic> valueMap) {
-    final label = valueMap['label'] ?? 'View';
-    final requestUrl = valueMap['url'];
-
-    if (requestUrl != null) {
-      return ElevatedButton(
-        style: ElevatedButton.styleFrom(
-          backgroundColor: AppColors.primary,
-          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-        ),
-        onPressed: () {
-          Navigator.push(
-            context,
-            MaterialPageRoute(
-              builder: (context) => ViewDetailsScreen(requestUrl: requestUrl), // Pass URL
-            ),
-          );
-        },
-        child: Text(
-          label,
-          style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
-        ),
-      );
-    } else {
-      return const Text("No link available", style: TextStyle(color: Colors.black54));
-    }
   }
 }

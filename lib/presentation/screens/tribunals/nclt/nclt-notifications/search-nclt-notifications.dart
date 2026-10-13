@@ -4,6 +4,7 @@ import 'package:html/parser.dart' as parser;
 import 'package:intl/intl.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'package:etribunals/core/constants/app_colors.dart';
+import 'package:etribunals/core/constants/tribunal_sources.dart';
 
 class SearchNcltNotificationsScreen extends StatefulWidget {
   const SearchNcltNotificationsScreen({super.key});
@@ -35,7 +36,7 @@ class _SearchNcltNotificationsScreenState extends State<SearchNcltNotificationsS
 
   Future<void> _loadForm() async {
     setState(() => _isLoading = true);
-    final response = await http.get(Uri.parse('https://nclt.gov.in/notifcations'));
+    final response = await http.get(Uri.parse(TribunalSources.ncltNotifications));
     if (response.statusCode == 200) {
       final document = parser.parse(response.body);
       captchaQuestion = document.querySelector('span.field-prefix')?.text.trim();
@@ -85,7 +86,7 @@ class _SearchNcltNotificationsScreenState extends State<SearchNcltNotificationsS
       'captcha_response': _captchaController.text,
     };
 
-    final uri = Uri.https('nclt.gov.in', '/notifcationss', queryParams);
+    final uri = Uri.https('nclt.gov.in', '/notifications', queryParams);
     final response = await http.get(uri);
 
     if (response.statusCode == 200) {

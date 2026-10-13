@@ -1,6 +1,10 @@
+﻿import 'dart:async';
 import 'dart:convert';
 
 import 'package:etribunals/core/constants/app_colors.dart';
+import 'package:etribunals/core/constants/tribunal_sources.dart';
+import 'package:etribunals/core/widgets/court_band.dart';
+import 'package:etribunals/core/widgets/source_footer.dart';
 import 'package:etribunals/presentation/screens/tribunals/nclt/case-status/search_nclt_results_screen.dart';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
@@ -17,17 +21,11 @@ class _SearchNCLTCaseStatusScreenState
     extends State<SearchNCLTCaseStatusScreen> {
   final TextEditingController _filingNumberController = TextEditingController();
   final TextEditingController _caseNumberController = TextEditingController();
-  String? _selectedSearchType = 'Select Search Type';
+  String? _selectedSearchType = 'filingnumber';
   String? _selectedBench = '0';
   String? _selectedCaseType = '0';
-  String? _selectedCaseYear = '0';
+  String? _selectedCaseYear;
   bool _isLoading = false;
-
-  final List<String> _searchTypes = [
-    'Select Search Type',
-    'filingnumber',
-    'casenumber'
-  ];
 
   final List<Map<String, String>> _benches = [
     {'value': '0', 'label': 'Select Bench'},
@@ -95,59 +93,114 @@ class _SearchNCLTCaseStatusScreenState
 
   final List<String> _caseYears = List.generate(
     15,
-    (index) => (2025 - index).toString(),
+    (index) => (DateTime.now().year - index).toString(),
   );
 
+  @override
+  void initState() {
+    super.initState();
+    _selectedCaseYear = _caseYears.first;
+  }
+
+  @override
+  void dispose() {
+    _filingNumberController.dispose();
+    _caseNumberController.dispose();
+    super.dispose();
+  }
+
   Future<void> _submitForm() async {
+    final selectedSearchType = _selectedSearchType;
+    if (selectedSearchType == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text("Please select a search type")),
+      );
+      return;
+    }
+
+    FocusScope.of(context).unfocus(); // Close keyboard before loading
+
+    // Validation logic
+    if (selectedSearchType == 'filingnumber') {
+      if (_filingNumberController.text.trim().isEmpty) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text("Please enter a filing number")),
+        );
+        return;
+      }
+    } else if (selectedSearchType == 'casenumber') {
+      if ((_selectedBench ?? '0') == '0') {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text("Please select a bench")),
+        );
+        return;
+      }
+      if (_caseNumberController.text.trim().isEmpty) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text("Please enter a case number")),
+        );
+        return;
+      }
+    }
+
     setState(() => _isLoading = true); // Show loader
 
     final Map<String, dynamic> payload = {
-      "wayofselection": _selectedSearchType,
+      "wayofselection": selectedSearchType,
       "i_bench_id": "0",
       "filing_no": _filingNumberController.text,
-      "i_bench_id_case_no": _selectedBench,
-      "i_case_type_caseno": _selectedCaseType,
-      "i_case_year_caseno": _selectedCaseYear,
+      "i_bench_id_case_no": _selectedBench ?? "0",
+      "i_case_type_caseno": _selectedCaseType ?? "0",
+      "i_case_year_caseno": _selectedCaseYear ?? "",
       "case_no": _caseNumberController.text,
-      "i_party_search": "E",
-      "i_bench_id_party": "0",
-      "party_type_party": "0",
-      "party_name_party": "",
-      "i_case_year_party": "0",
-      "status_party": "0",
-      "i_adv_search": "E",
-      "i_bench_id_lawyer": "0",
-      "party_lawer_name": "",
-      "i_case_year_lawyer": "0",
-      "bar_council_advocate": "",
     };
 
     try {
       final response = await http.post(
         Uri.parse("https://efiling.nclt.gov.in/caseHistoryoptional.drt"),
-        headers: {"Content-Type": "application/json"},
+        headers: {
+          "Content-Type": "application/json",
+          "Accept": "application/json",
+        },
         body: jsonEncode(payload),
-      );
+      ).timeout(const Duration(seconds: 25));
 
       if (response.statusCode == 200) {
-        final Map<String, dynamic> responseData = jsonDecode(response.body);
+        Map<String, dynamic> responseData;
+        try {
+          final dynamic decoded = jsonDecode(response.body);
+          if (decoded is! Map<String, dynamic>) {
+            throw const FormatException("Unexpected response format");
+          }
+          responseData = decoded;
+        } on FormatException {
+          throw const FormatException("Invalid data received from server");
+        }
+
+        if (!mounted) return;
         setState(() => _isLoading = false); // Hide loader
 
         Navigator.push(
           context,
           MaterialPageRoute(
-            builder:
-                (context) => SearchNCLTResultsScreen(responseData), // Pass data
+            builder: (context) => SearchNCLTResultsScreen(responseData),
           ),
         );
       } else {
         throw Exception("Failed to fetch data: ${response.statusCode}");
       }
-    } catch (e) {
+    } on TimeoutException {
+      if (!mounted) return;
       setState(() => _isLoading = false);
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(SnackBar(content: Text("Error fetching data: $e")));
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text("Request timed out. Please try again.")),
+      );
+    } catch (e) {
+      if (!mounted) return;
+      setState(() => _isLoading = false);
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text("Error fetching data: $e")),
+      );
     }
   }
 
@@ -161,6 +214,7 @@ class _SearchNCLTCaseStatusScreenState
       value: value,
       items: items,
       onChanged: onChanged,
+      style: const TextStyle(color: AppColors.textPrimary),
       decoration: InputDecoration(labelText: label, isDense: true),
       dropdownColor: Theme.of(context).cardColor,
       isExpanded: true,
@@ -171,81 +225,85 @@ class _SearchNCLTCaseStatusScreenState
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        title: const Text("Search NCLT Case Status"),
-      ),
-      body: Padding(
-        padding: const EdgeInsets.all(16.0),
-        child:
-            _isLoading
-                ? const Center(child: CircularProgressIndicator())
-                : Column(
-                  children: [
-                    _buildDropdown<String>(
-                      value: _selectedSearchType,
-                      label: "Select Search Type",
-                      onChanged: (value) => setState(() => _selectedSearchType = value),
-                      items: _searchTypes.map((type) {
-                        return DropdownMenuItem(value: type, child: Text(type.toUpperCase()));
-                      }).toList(),
-                    ),
-                    const SizedBox(height: 20),
-                    if (_selectedSearchType == 'filingnumber')
-                      TextField(
-                        controller: _filingNumberController,
-                        decoration: const InputDecoration(
-                          labelText: "Enter Filing Number",
-                          border: OutlineInputBorder(
-                            borderRadius: BorderRadius.all(
-                              Radius.circular(8.0),
-                            ),
-                          ),
-                        ),
-                      ),
-                    const SizedBox(height: 20),
-                    if (_selectedSearchType == 'casenumber') ...[
-                      _buildDropdown<String>(
-                        value: _selectedBench,
-                        label: "Select Bench",
-                        onChanged: (value) => setState(() => _selectedBench = value),
-                        items: _benches.map((bench) {
-                          return DropdownMenuItem(value: bench['value'], child: Text(bench['label']!));
-                        }).toList(),
-                      ),
-                      const SizedBox(height: 20),
-                      _buildDropdown<String>(
-                        value: _selectedCaseType,
-                        label: "Select Case Type",
-                        onChanged: (value) => setState(() => _selectedCaseType = value),
-                        items: _caseTypes.map((caseType) {
-                          return DropdownMenuItem(value: caseType['value'], child: Text(caseType['label']!));
-                        }).toList(),
-                      ),
-                      const SizedBox(height: 20),
-                      TextField(
-                        controller: _caseNumberController,
-                        decoration: const InputDecoration(labelText: "Enter Case Number"),
-                      ),
-                      const SizedBox(height: 20),
-                      _buildDropdown<String>(
-                        value: _caseYears.contains(_selectedCaseYear) ? _selectedCaseYear : _caseYears.first,
-                        label: "Select Case Year",
-                        onChanged: (value) => setState(() => _selectedCaseYear = value),
-                        items: _caseYears.map((year) {
-                          return DropdownMenuItem(value: year, child: Text(year));
-                        }).toList(),
-                      ),
-                    ],
-                    const SizedBox(height: 20),
-                    SizedBox(
-                      width: double.infinity,
-                      child: ElevatedButton(
-                        onPressed: _submitForm,
-                        child: const Text("Search Case Status"),
-                      ),
-                    ),
-                  ],
-                ),
+      backgroundColor: AppColors.secondary,
+      appBar: AppBar(title: const Text('NCLT case status')),
+      body: ListView(
+        padding: const EdgeInsets.all(16),
+        children: [
+          const CourtBand(
+            title: 'Search official record',
+            subtitle: 'eFiling NCLT  Â·  filing no. or bench + case no.',
+            icon: Icons.search,
+          ),
+          const SizedBox(height: 14),
+          DropdownButtonFormField<String>(
+            isExpanded: true,
+            initialValue: _selectedSearchType,
+            decoration: const InputDecoration(labelText: 'Search by'),
+            items: const [
+              DropdownMenuItem(value: 'filingnumber', child: Text('Filing / diary no.')),
+              DropdownMenuItem(value: 'casenumber', child: Text('Case number')),
+            ],
+            onChanged: (value) {
+              setState(() {
+                _selectedSearchType = value;
+                _filingNumberController.clear();
+                _caseNumberController.clear();
+                _selectedBench = '0';
+                _selectedCaseType = '0';
+                _selectedCaseYear = _caseYears.first;
+              });
+            },
+          ),
+          const SizedBox(height: 12),
+          if (_selectedSearchType == 'filingnumber')
+            TextField(
+              controller: _filingNumberController,
+              decoration: const InputDecoration(labelText: 'Filing number'),
+            ),
+          if (_selectedSearchType == 'casenumber') ...[
+            _buildDropdown<String>(
+              value: _selectedBench,
+              label: 'Bench',
+              onChanged: (value) => setState(() => _selectedBench = value),
+              items: _benches
+                  .map((bench) => DropdownMenuItem(value: bench['value'], child: Text(bench['label']!)))
+                  .toList(),
+            ),
+            const SizedBox(height: 12),
+            _buildDropdown<String>(
+              value: _selectedCaseType,
+              label: 'Case type',
+              onChanged: (value) => setState(() => _selectedCaseType = value),
+              items: _caseTypes
+                  .map((caseType) => DropdownMenuItem(value: caseType['value'], child: Text(caseType['label']!)))
+                  .toList(),
+            ),
+            const SizedBox(height: 12),
+            TextField(
+              controller: _caseNumberController,
+              decoration: const InputDecoration(labelText: 'Case number (serial only)'),
+            ),
+            const SizedBox(height: 12),
+            _buildDropdown<String>(
+              value: _selectedCaseYear,
+              label: 'Year',
+              onChanged: (value) => setState(() => _selectedCaseYear = value),
+              items: _caseYears.map((year) => DropdownMenuItem(value: year, child: Text(year))).toList(),
+            ),
+          ],
+          const SizedBox(height: 18),
+          SizedBox(
+            height: 50,
+            child: ElevatedButton(
+              onPressed: _isLoading ? null : _submitForm,
+              child: _isLoading
+                  ? const SizedBox(width: 22, height: 22, child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white))
+                  : const Text('Search'),
+            ),
+          ),
+          SourceFooter(tribunal: 'NCLT', officialUrl: TribunalSources.officialHome('NCLT')),
+        ],
       ),
     );
   }

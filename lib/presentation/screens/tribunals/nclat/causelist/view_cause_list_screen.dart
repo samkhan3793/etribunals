@@ -1,10 +1,12 @@
-import 'package:flutter/material.dart';
+﻿import 'package:flutter/material.dart';
 import 'package:etribunals/core/constants/app_colors.dart';
 import 'package:etribunals/core/widgets/common_widgets.dart';
-import 'package:url_launcher/url_launcher.dart';
+import 'package:etribunals/core/widgets/court_band.dart';
+import 'package:etribunals/core/widgets/in_app_document_screen.dart';
 import 'package:etribunals/core/utils/web_scraper.dart';
 import 'package:intl/intl.dart';
 import 'package:etribunals/core/utils/model_bottom_sheet.dart';
+
 class ViewCauseListScreen extends StatefulWidget {
   const ViewCauseListScreen({super.key});
 
@@ -82,24 +84,62 @@ class _ViewCauseListScreenState extends State<ViewCauseListScreen> {
   void _showFilterBottomSheet(BuildContext context) {
     showModalBottomSheet(
       context: context,
+      isScrollControlled: true,
+      backgroundColor: AppColors.primary,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(30)),
+      ),
       builder: (BuildContext context) {
-        return BottomSheetContent(
-          defaultStartDate: DateTime.now(),
-          defaultEndDate: DateTime.now().add(const Duration(days: 7)),
-          courtList: _courtNames, // Pass dynamic court list
-          onFilterApplied: (selectedCourt, startDate, endDate) {
-            setState(() {
-              _selectedCourtId = selectedCourt;
-              _formattedStartDate = startDate;
-              _formattedEndDate = endDate!;
-              _isLoading = true;
-            });
-
-            _loadCauseList();
-          },
+        return SafeArea(
+          top: false,
+          child: Container(
+            padding: EdgeInsets.only(
+              bottom: MediaQuery.of(context).viewInsets.bottom + 24,
+              top: 16,
+              left: 24,
+              right: 24,
+            ),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                // Visual Grab Handle
+                Container(
+                  width: 50,
+                  height: 5,
+                  margin: const EdgeInsets.only(bottom: 28),
+                  decoration: BoxDecoration(
+                    color: Colors.white.withOpacity(0.2),
+                    borderRadius: BorderRadius.circular(10),
+                  ),
+                ),
+                BottomSheetContent(
+                  defaultStartDate: DateTime.now(),
+                  defaultEndDate: DateTime.now().add(const Duration(days: 7)),
+                  courtList: _courtNames,
+                  onFilterApplied: (selectedCourt, startDate, endDate) {
+                    setState(() {
+                      _selectedCourtId = selectedCourt;
+                      _formattedStartDate = startDate;
+                      _formattedEndDate = endDate!;
+                      _isLoading = true;
+                    });
+                    _loadCauseList();
+                  },
+                ),
+              ],
+            ),
+          ),
         );
       },
     );
+  }
+
+  String _getSelectedCourtName() {
+    final court = _courtNames.firstWhere(
+      (element) => element['id'] == _selectedCourtId,
+      orElse: () => {'name': 'All Courts'},
+    );
+    return court['name']!;
   }
 
   @override
@@ -107,95 +147,106 @@ class _ViewCauseListScreenState extends State<ViewCauseListScreen> {
     return Scaffold(
       backgroundColor: AppColors.secondary,
       appBar: AppBar(
-        title: customText("PDF Cause List", size: 20, color: AppColors.white),
-        backgroundColor: AppColors.primary,
+        title: const Text('NCLAT cause list'),
         actions: [
           IconButton(
-            icon: const Icon(Icons.filter_alt),
+            icon: const Icon(Icons.tune_rounded),
             onPressed: () => _showFilterBottomSheet(context),
           ),
         ],
       ),
-      body: _isLoading
-          ? const Center(child: CircularProgressIndicator())
-          : _error != null
-              ? Center(child: customText(_error!, size: 16, color: Colors.red))
-              : _tableData.isEmpty
-                  ? Center(child: customText("No data found."))
-                  : ListView.builder(
-                      padding: const EdgeInsets.all(16.0),
-                      itemCount: _tableData.length,
-                      itemBuilder: (context, index) {
-                        final row = _tableData[index];
-                        return Card(
-                          color: Colors.white,
-                          margin: const EdgeInsets.symmetric(vertical: 8.0),
-                          elevation: 5,
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(12),
-                          ),
-                          child: Padding(
-                            padding: const EdgeInsets.all(12.0),
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: row.entries.map((entry) {
-                                return Padding(
-                                  padding: const EdgeInsets.symmetric(vertical: 4.0),
-                                  child: Row(
-                                    crossAxisAlignment: CrossAxisAlignment.start,
-                                    children: [
-                                      Text(
-                                        "${entry.key}: ",
-                                        style: const TextStyle(fontWeight: FontWeight.bold, color: Colors.black),
-                                      ),
-                                      const SizedBox(width: 8),
-                                      Expanded(
-                                        child: entry.key == 'View/Download' &&
-                                                entry.value is Map<String, dynamic>
-                                            ? _buildDownloadWidget(entry.value)
-                                            : Text(
-                                                entry.value.toString(),
-                                                style: const TextStyle(color: Colors.black87),
-                                              ),
-                                      ),
-                                    ],
-                                  ),
-                                );
-                              }).toList(),
-                            ),
-                          ),
-                        );
-                      },
-                    ),
+      body: RefreshIndicator(
+        onRefresh: () async {
+          setState(() => _isLoading = true);
+          await _loadCauseList();
+        },
+        child: ListView(
+          padding: const EdgeInsets.all(16),
+          children: [
+            CourtBand(
+              title: _getSelectedCourtName(),
+              subtitle: '$_formattedStartDate  â†’  $_formattedEndDate',
+              icon: Icons.list_alt,
+            ),
+            const SizedBox(height: 12),
+            Wrap(
+              spacing: 8,
+              children: [
+                ActionChip(
+                  avatar: const Icon(Icons.account_balance, size: 16),
+                  label: Text(_getSelectedCourtName()),
+                  onPressed: () => _showFilterBottomSheet(context),
+                ),
+                ActionChip(
+                  avatar: const Icon(Icons.calendar_month, size: 16),
+                  label: Text('$_formattedStartDate â€“ $_formattedEndDate'),
+                  onPressed: () => _showFilterBottomSheet(context),
+                ),
+              ],
+            ),
+            const SizedBox(height: 16),
+            if (_isLoading)
+              const Padding(
+                padding: EdgeInsets.only(top: 48),
+                child: Center(child: CircularProgressIndicator()),
+              )
+            else if (_error != null)
+              Center(child: customText(_error!, color: AppColors.stampRed, align: TextAlign.center))
+            else if (_tableData.isEmpty)
+              const Padding(
+                padding: EdgeInsets.only(top: 48),
+                child: Center(child: Text('No cause lists for this filter')),
+              )
+            else
+              ..._tableData.map(_buildDocumentCard),
+          ],
+        ),
+      ),
     );
   }
 
-  Widget _buildDownloadWidget(Map<String, dynamic> valueMap) {
-    final label = valueMap['label'] ?? 'Download';
-    final relativeUrl = valueMap['url'];
+  Widget _buildDocumentCard(Map<String, dynamic> row) {
+    final downloadInfo = row['View/Download'] as Map<String, dynamic>?;
+    final dateStr = row['Date']?.toString() ?? 'Date not listed';
+    final courtStr = row['Court Name']?.toString() ?? 'Court';
+    final pdfUrl = downloadInfo?['url']?.toString();
 
-    if (relativeUrl != null && relativeUrl.toString().endsWith('.pdf')) {
-      final fullUrl = 'https://nclat.nic.in$relativeUrl';
-      return InkWell(
-        onTap: () async {
-          final uri = Uri.parse(fullUrl);
-          await launchUrl(uri, mode: LaunchMode.externalApplication);
-        },
-        child: Row(
+    return Card(
+      color: AppColors.paper,
+      elevation: 0,
+      margin: const EdgeInsets.only(bottom: 12),
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(10),
+        side: const BorderSide(color: Color(0x3314384A)),
+      ),
+      child: Padding(
+        padding: const EdgeInsets.fromLTRB(12, 12, 12, 10),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            const Icon(Icons.picture_as_pdf, color: Colors.red),
-            const SizedBox(width: 8),
-            Flexible(
-              child: Text(
-                label,
-                style: TextStyle(color: AppColors.accent, fontWeight: FontWeight.w600, decoration: TextDecoration.underline),
+            Text(courtStr, style: const TextStyle(fontWeight: FontWeight.w800, color: AppColors.ink, fontSize: 15.5)),
+            const SizedBox(height: 4),
+            Text(dateStr, style: const TextStyle(color: AppColors.textMuted, fontSize: 13)),
+            const SizedBox(height: 10),
+            Align(
+              alignment: Alignment.centerRight,
+              child: FilledButton.icon(
+                onPressed: pdfUrl == null ? null : () => _openPdf(pdfUrl, courtStr),
+                icon: const Icon(Icons.picture_as_pdf_outlined, size: 18),
+                label: const Text('Open PDF'),
               ),
             ),
           ],
         ),
-      );
-    } else {
-      return const Text("No PDF available", style: TextStyle(color: Colors.black54));
-    }
+      ),
+    );
+  }
+
+  Future<void> _openPdf(String relativeUrl, String title) async {
+    final cleanPath = relativeUrl.startsWith('http')
+        ? relativeUrl
+        : (relativeUrl.startsWith('/') ? relativeUrl : '/$relativeUrl');
+    final fullUrl = cleanPath.startsWith('http') ? cleanPath : 'https://nclat.nic.in$cleanPath';
+    await InAppDocumentScreen.open(context, fullUrl, title: title);
   }
 }

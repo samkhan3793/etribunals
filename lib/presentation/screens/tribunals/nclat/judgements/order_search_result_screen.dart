@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'package:html/parser.dart' as html;
 import 'package:etribunals/core/constants/app_colors.dart';
+import 'package:etribunals/core/widgets/case_summary_card.dart';
 
 class OrderSearchResultScreen extends StatelessWidget {
   final String responseData;
@@ -14,131 +15,32 @@ class OrderSearchResultScreen extends StatelessWidget {
     final cases = parseResponse(responseData);
 
     return Scaffold(
-      appBar: AppBar(
-        title: Text(
-          'Case Details for Orders Results',
-          style: TextStyle(fontWeight: FontWeight.bold, color: AppColors.white),
-        ),
-        backgroundColor: AppColors.primary,
-        elevation: 0,
-      ),
+      appBar: AppBar(title: const Text('Order search results')),
       backgroundColor: AppColors.secondary,
-      body: Padding(
-        padding: const EdgeInsets.all(16.0),
-        child: cases.isEmpty
-            ? Center(
-                child: Column(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    Icon(Icons.search_off, size: 80, color: AppColors.secondary),
-                    SizedBox(height: 10),
-                    Text(
-                      'No results found',
-                      style: TextStyle(fontSize: 18, color: AppColors.secondary),
-                    ),
-                  ],
-                ),
-              )
-            : ListView.builder(
-                itemCount: cases.length,
-                itemBuilder: (context, index) {
-                  final caseData = cases[index];
-                  return Card(
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(15),
-                    ),
-                    elevation: 8,
-                    margin: EdgeInsets.symmetric(vertical: 12),
-                    color: AppColors.white, // Updated card color to white
-                    child: Padding(
-                      padding: const EdgeInsets.all(20.0),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          _infoRow('Case Title:', caseData['case_title']!, AppColors.primary),
-                          Divider(color: AppColors.accent),
-                          _infoRow('Filing No.', caseData['filing_no']!, AppColors.secondary),
-                          _infoRow('Case No.', caseData['case_no']!, AppColors.secondary),
-                          _infoRow('Registration Date:', caseData['registration_date']!, AppColors.secondary),
-                          SizedBox(height: 20),
-                          Align(
-                            alignment: Alignment.centerRight,
-                            child: ElevatedButton.icon(
-                              onPressed: () => _fetchCaseDetails(context, caseData['filing_no']!),
-                              icon: Icon(Icons.visibility, color: AppColors.white),
-                              label: Text('View Details', style: TextStyle(color: AppColors.white)),
-                              style: ElevatedButton.styleFrom(
-                                backgroundColor: AppColors.accent,
-                                shape: RoundedRectangleBorder(
-                                  borderRadius: BorderRadius.circular(10),
-                                ),
-                                padding: EdgeInsets.symmetric(horizontal: 18, vertical: 14),
-                              ),
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                  );
-                },
+      body: cases.isEmpty
+          ? const Center(
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Icon(Icons.search_off, size: 64, color: AppColors.textMuted),
+                  SizedBox(height: 10),
+                  Text(
+                    'No results found',
+                    style: TextStyle(fontSize: 16, color: AppColors.textPrimary, fontWeight: FontWeight.w700),
+                  ),
+                ],
               ),
-      ),
+            )
+          : ListView.separated(
+              padding: const EdgeInsets.all(16),
+              itemCount: cases.length,
+              separatorBuilder: (_, __) => const SizedBox(height: 12),
+              itemBuilder: (context, index) {
+                final caseData = cases[index];
+                return _OrderResultCard(caseData: caseData);
+              },
+            ),
     );
-  }
-
-  Widget _infoRow(String label, String value, Color textColor) {
-  return Padding(
-    padding: const EdgeInsets.only(bottom: 8.0),
-    child: Row(
-      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-      children: [
-        Expanded(
-          child: Text(
-            label,
-            style: TextStyle(fontWeight: FontWeight.bold, color: AppColors.accent),
-          ),
-        ),
-        Expanded(
-          child: Text(
-            value,
-            style: TextStyle(color: textColor),
-            softWrap: true,
-            maxLines: 2, // Limits excessive length
-            overflow: TextOverflow.ellipsis, // Adds "..." for long content
-            textAlign: TextAlign.right,
-          ),
-        ),
-      ],
-    ),
-  );
-}
-
-
-  void _fetchCaseDetails(BuildContext context, String filingNo) async {
-    try {
-      var response = await http.post(
-        Uri.parse('https://efiling.nclat.gov.in/nclat/ajax/ajax.php'),
-        headers: {'Content-Type': 'application/x-www-form-urlencoded'},
-        body: {'action': 'case_status_case_details', 'filing_no': filingNo, 'schema_name': 'delhi'},
-      );
-
-      if (response.statusCode == 200) {
-        Navigator.push(
-          context,
-          MaterialPageRoute(
-            builder: (context) => OrdersDetailsScreen(filingNo: filingNo, responseData: response.body),
-          ),
-        );
-      } else {
-        _showSnackBar(context, 'Failed to fetch details');
-      }
-    } catch (e) {
-      _showSnackBar(context, 'An error occurred');
-    }
-  }
-
-  void _showSnackBar(BuildContext context, String message) {
-    ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(message)));
   }
 
   List<Map<String, String>> parseResponse(String responseData) {
@@ -160,5 +62,63 @@ class OrderSearchResultScreen extends StatelessWidget {
     }
 
     return cases;
+  }
+}
+
+class _OrderResultCard extends StatefulWidget {
+  final Map<String, String> caseData;
+
+  const _OrderResultCard({required this.caseData});
+
+  @override
+  State<_OrderResultCard> createState() => _OrderResultCardState();
+}
+
+class _OrderResultCardState extends State<_OrderResultCard> {
+  bool _loading = false;
+
+  Future<void> _fetchCaseDetails() async {
+    final filingNo = widget.caseData['filing_no'] ?? '';
+    setState(() => _loading = true);
+    try {
+      var response = await http.post(
+        Uri.parse('https://efiling.nclat.gov.in/nclat/ajax/ajax.php'),
+        headers: {'Content-Type': 'application/x-www-form-urlencoded'},
+        body: {'action': 'case_status_case_details', 'filing_no': filingNo, 'schema_name': 'delhi'},
+      );
+
+      if (!mounted) return;
+      setState(() => _loading = false);
+      if (response.statusCode == 200) {
+        Navigator.push(
+          context,
+          MaterialPageRoute(
+            builder: (context) => OrdersDetailsScreen(filingNo: filingNo, responseData: response.body),
+          ),
+        );
+      } else {
+        ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Failed to fetch details')));
+      }
+    } catch (e) {
+      if (!mounted) return;
+      setState(() => _loading = false);
+      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Could not open details')));
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final caseData = widget.caseData;
+    return CaseSummaryCard(
+      fields: {
+        'Case Title': caseData['case_title'] ?? '',
+        'Filing No.': caseData['filing_no'] ?? '',
+        'Case No.': caseData['case_no'] ?? '',
+        'Registration Date': caseData['registration_date'] ?? '',
+      },
+      actionLabel: 'View details',
+      loading: _loading,
+      onAction: _fetchCaseDetails,
+    );
   }
 }

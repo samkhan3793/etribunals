@@ -2,7 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:etribunals/core/constants/app_colors.dart';
 import 'package:etribunals/core/widgets/common_widgets.dart';
 import 'package:intl/intl.dart';
-import 'package:url_launcher/url_launcher.dart';
+import 'package:etribunals/core/utils/drupal_listing.dart';
+import 'package:etribunals/core/widgets/in_app_document_screen.dart';
 import 'package:etribunals/core/utils/web_scraper.dart' as web_scraper;
 import 'package:etribunals/core/utils/model_bottom_sheet.dart';
 
@@ -29,8 +30,8 @@ class _NoticeScreenState extends State<NoticeScreen> {
   @override
   void initState() {
     super.initState();
-    _formattedStartDate = DateFormat('yyyy-MM-dd').format(_startDate);
-    _formattedEndDate = DateFormat('yyyy-MM-dd').format(_endDate);
+    _formattedStartDate = '';
+    _formattedEndDate = '';
     _isLoading = true;
     _loadNoticeList();
     _loadCourtNames();
@@ -148,9 +149,9 @@ class _NoticeScreenState extends State<NoticeScreen> {
                                       ),
                                       const SizedBox(width: 8),
                                       Expanded(
-                                        child: entry.key == 'View/Download' &&
-                                                entry.value is Map<String, dynamic>
-                                            ? _buildDownloadWidget(entry.value)
+                                        child: entry.value is Map<String, dynamic> &&
+                                                (entry.value as Map).containsKey('url')
+                                            ? _buildDownloadWidget(Map<String, dynamic>.from(entry.value as Map))
                                             : Text(
                                                 entry.value.toString(),
                                                 style: const TextStyle(color: Colors.black87),
@@ -172,12 +173,11 @@ class _NoticeScreenState extends State<NoticeScreen> {
     final label = valueMap['label'] ?? 'Download';
     final relativeUrl = valueMap['url'];
   // debugPrint('Relative URL: $relativeUrl');
-    if (relativeUrl != null && relativeUrl.toString().endsWith('.pdf')) {
-      final fullUrl = 'https://nclat.nic.in$relativeUrl';
+    if (relativeUrl != null && relativeUrl.toString().isNotEmpty) {
+      final fullUrl = absoluteUrl(relativeUrl.toString(), host: 'https://nclat.nic.in');
       return InkWell(
         onTap: () async {
-          final uri = Uri.parse(fullUrl);
-          await launchUrl(uri, mode: LaunchMode.externalApplication);
+          await InAppDocumentScreen.open(context, fullUrl, title: label.toString());
         },
         child: Row(
           children: [

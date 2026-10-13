@@ -44,6 +44,8 @@ app.*.map.json
 /android/app/profile
 /android/app/release
 /android/app/build/
+/android/build/
+play_store/raw/
 
 # Bundled AI key — do not publish
 lib/core/constants/app_ai.dart

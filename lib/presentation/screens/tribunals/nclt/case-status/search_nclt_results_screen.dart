@@ -1,8 +1,11 @@
 import 'package:etribunals/core/constants/app_colors.dart';
+import 'package:etribunals/core/constants/tribunal_sources.dart';
+import 'package:etribunals/core/widgets/case_summary_card.dart';
+import 'package:etribunals/core/widgets/source_footer.dart';
+import 'package:etribunals/presentation/screens/tribunals/nclt/case-status/nclt_case_details_screen.dart';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
-import 'package:etribunals/presentation/screens/tribunals/nclt/case-status/nclt_case_details_screen.dart';
 
 class SearchNCLTResultsScreen extends StatefulWidget {
   final Map<String, dynamic> data;
@@ -10,139 +13,111 @@ class SearchNCLTResultsScreen extends StatefulWidget {
   const SearchNCLTResultsScreen(this.data, {super.key});
 
   @override
-  _SearchNCLTResultsScreenState createState() => _SearchNCLTResultsScreenState();
+  State<SearchNCLTResultsScreen> createState() => _SearchNCLTResultsScreenState();
 }
 
 class _SearchNCLTResultsScreenState extends State<SearchNCLTResultsScreen> {
-  bool _isLoading = false; // Loading state indicator
+  bool _isLoading = false;
 
-  Future<void> _fetchCaseDetails(BuildContext context, String filingNo, String mainCaseFno) async {
-    setState(() => _isLoading = true); // Start loading
+  Map<String, dynamic> _firstPanel() {
+    final list = widget.data['mainpanellist'];
+    if (list is List && list.isNotEmpty && list.first is Map) {
+      return Map<String, dynamic>.from(list.first as Map);
+    }
+    return {};
+  }
 
-    final bool flagIA = mainCaseFno == "NA" ? false : true;
-    final String url = "https://efiling.nclt.gov.in/caseHistoryalldetails.drt?filing_no=$filingNo&flagIA=$flagIA";
+  Future<void> _fetchCaseDetails(Map<String, dynamic> details) async {
+    final filingNo = fieldStr(details, 'filing_no', '');
+    final mainCaseFno = fieldStr(details, 'main_case_fno', 'NA');
+    if (filingNo.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Filing number missing for this case')),
+      );
+      return;
+    }
+
+    setState(() => _isLoading = true);
+    final flagIA = mainCaseFno == 'NA' ? 'false' : 'true';
+    final uri = Uri.https('efiling.nclt.gov.in', '/caseHistoryalldetails.drt', {
+      'filing_no': filingNo,
+      'flagIA': flagIA,
+    });
 
     try {
-      final response = await http.get(Uri.parse(url));
-
-      if (response.statusCode == 200) {
-        final Map<String, dynamic> caseData = jsonDecode(response.body);
-
-        setState(() => _isLoading = false); // Stop loading
-
-        Navigator.push(
-          context,
-          MaterialPageRoute(builder: (context) => CaseDetailsScreen(caseData)),
-        );
-      } else {
-        throw Exception("Failed to fetch case details");
+      final response = await http.get(uri);
+      if (!mounted) return;
+      if (response.statusCode != 200) {
+        throw Exception('Server ${response.statusCode}');
       }
+      final decoded = jsonDecode(response.body);
+      if (decoded is! Map<String, dynamic>) {
+        throw Exception('Unexpected response from NCLT');
+      }
+      setState(() => _isLoading = false);
+      Navigator.push(
+        context,
+        MaterialPageRoute(builder: (context) => CaseDetailsScreen(decoded)),
+      );
     } catch (e) {
-      setState(() => _isLoading = false); // Stop loading in case of an error
+      if (!mounted) return;
+      setState(() => _isLoading = false);
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text("Error fetching case details: $e")),
+        SnackBar(content: Text('Could not open details: $e')),
       );
     }
   }
 
   @override
   Widget build(BuildContext context) {
-    final caseHeader = widget.data['caseHheader'] ?? "Case Details";
-    final caseDetails = (widget.data['mainpanellist'] as List?)?.firstOrNull ?? {};
+    final caseHeader = widget.data['caseHheader']?.toString() ?? 'Case Details';
+    final caseDetails = _firstPanel();
 
     return Scaffold(
-      appBar: AppBar(
-        title: const Text("Case Status Results"),
-        backgroundColor: AppColors.primary,
-        centerTitle: true,
-      ),
+      appBar: AppBar(title: const Text('Case status results')),
       backgroundColor: AppColors.secondary,
-      body: Padding(
-        padding: const EdgeInsets.all(16.0),
-        child: caseDetails.isNotEmpty
-            ? Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    caseHeader,
-                    style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 18),
-                    textAlign: TextAlign.center,
+      body: caseDetails.isEmpty
+          ? const Center(child: Text('No case details available'))
+          : ListView(
+              padding: const EdgeInsets.all(16),
+              children: [
+                Text(
+                  caseHeader,
+                  style: const TextStyle(
+                    fontWeight: FontWeight.w800,
+                    fontSize: 16,
+                    color: AppColors.textPrimary,
                   ),
-                  const SizedBox(height: 10),
-                  const Divider(color: Colors.grey, thickness: 1.5),
-                  const SizedBox(height: 20),
-                  _buildCaseDetailsCard(context, caseDetails),
-                ],
-              )
-            : const Center(child: Text("No case details available")),
-      ),
-    );
-  }
-
-  Widget _buildCaseDetailsCard(BuildContext context, Map<String, dynamic> details) {
-    final Map<String, String> filteredDetails = {
-      "Filing No.": details["filing_no"] ?? "N/A",
-      "Case Type": details["case_type_desc_cis"] ?? "N/A",
-      "Case No": details["case_no"] ?? "N/A",
-      "Case Title": "${details["case_title1"] ?? "N/A"} vs ${details["case_title2"] ?? "N/A"}",
-      "Bench Location / Court No.": "${details["bench_location_name"] ?? "N/A"} / ${details["court_no"] ?? "N/A"}",
-      "Main Case Filing No": details["main_case_fno"] ?? "N/A",
-      "Filing / Registration Date": "${details["date_of_filing"] ?? "N/A"} / ${details["regis_date"] ?? "N/A"}",
-      "Next Listing / Dispose Date": "${details["next_list_date"] ?? "N/A"} / ${details["disposal_date"] ?? "N/A"}",
-      "Case Status": details["status"] ?? "N/A",
-      "All Hearings": details["allhearing"]?.toString() ?? "N/A",
-      "Effective Hearings": details["effhearing"]?.toString() ?? "N/A",
-    };
-
-    return Card(
-      elevation: 5,
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-      margin: const EdgeInsets.symmetric(vertical: 10),
-      borderOnForeground: true,
-      color: Colors.white,
-      child: Padding(
-        padding: const EdgeInsets.all(16.0),
-        child: Column(
-          children: [
-            ...filteredDetails.entries.map((entry) => Padding(
-              padding: const EdgeInsets.only(bottom: 8.0),
-              child: Row(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Expanded(
-                    flex: 2,
-                    child: Text(
-                      "${entry.key}: ",
-                      style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16, color: Colors.black87),
-                      maxLines: 2,
-                      overflow: TextOverflow.ellipsis,
-                    ),
-                  ),
-                  Expanded(
-                    flex: 3,
-                    child: Text(
-                      entry.value,
-                      maxLines: 3,
-                      overflow: TextOverflow.ellipsis,
-                      style: const TextStyle(fontSize: 16, color: AppColors.secondary),
-                    ),
-                  ),
-                ],
-              ),
-            )),
-            const SizedBox(height: 10),
-            Align(
-              alignment: Alignment.centerRight,
-              child: _isLoading
-                  ? const CircularProgressIndicator() // Show loading indicator
-                  : TextButton(
-                      onPressed: () => _fetchCaseDetails(context, details["filing_no"] ?? "", details["main_case_fno"] ?? "NA"),
-                      child: const Text("View More Details", style: TextStyle(color: Colors.blue, fontSize: 16, fontWeight: FontWeight.bold)),
-                    ),
+                ),
+                const SizedBox(height: 12),
+                CaseSummaryCard(
+                  fields: {
+                    'Case no.': fieldStr(caseDetails, 'case_no'),
+                    'Diary / filing': fieldStr(caseDetails, 'filing_no'),
+                    'Party':
+                        '${fieldStr(caseDetails, 'case_title1')} vs ${fieldStr(caseDetails, 'case_title2')}',
+                    'Status': fieldStr(caseDetails, 'status'),
+                    'Case Type': fieldStr(caseDetails, 'case_type_desc_cis'),
+                    'Bench / Court':
+                        '${fieldStr(caseDetails, 'bench_location_name')} / ${fieldStr(caseDetails, 'court_no')}',
+                    'Main Case Filing No': fieldStr(caseDetails, 'main_case_fno'),
+                    'Filing / Registration':
+                        '${fieldStr(caseDetails, 'date_of_filing')} / ${fieldStr(caseDetails, 'regis_date')}',
+                    'Next listing / Dispose':
+                        '${fieldStr(caseDetails, 'next_list_date')} / ${fieldStr(caseDetails, 'disposal_date')}',
+                    'All Hearings': fieldStr(caseDetails, 'allhearing'),
+                    'Effective Hearings': fieldStr(caseDetails, 'effhearing'),
+                  },
+                  actionLabel: 'View details',
+                  loading: _isLoading,
+                  onAction: () => _fetchCaseDetails(caseDetails),
+                ),
+                SourceFooter(
+                  tribunal: 'NCLT',
+                  officialUrl: TribunalSources.officialHome('NCLT'),
+                ),
+              ],
             ),
-          ],
-        ),
-      ),
     );
   }
 }

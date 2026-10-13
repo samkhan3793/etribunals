@@ -1,22 +1,23 @@
 import 'package:etribunals/core/constants/app_colors.dart';
 import 'package:flutter/material.dart';
 
-/// Custom Text widget for reusability
 Widget customText(
   String text, {
   double size = 16,
   FontWeight weight = FontWeight.normal,
-  Color color = Colors.black,
+  Color color = AppColors.textPrimary,
   TextAlign align = TextAlign.start,
+  int? maxLines,
 }) {
   return Text(
     text,
     textAlign: align,
-    style: TextStyle(fontSize: size, fontWeight: weight, color: color),
+    maxLines: maxLines,
+    overflow: maxLines == null ? null : TextOverflow.ellipsis,
+    style: TextStyle(fontSize: size, fontWeight: weight, color: color, height: 1.35),
   );
 }
 
-/// Custom TextFormField widget for reusable input fields
 Widget inputTextField({
   required TextEditingController controller,
   required String label,
@@ -29,37 +30,38 @@ Widget inputTextField({
     obscureText: isPassword,
     keyboardType: inputType,
     validator: validator,
-    style: const TextStyle(color: Colors.black),
+    style: const TextStyle(color: AppColors.textPrimary),
     decoration: InputDecoration(
       labelText: label,
-      labelStyle: const TextStyle(color: Colors.black54),
-      border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
+      labelStyle: const TextStyle(color: AppColors.textMuted),
+      filled: true,
+      fillColor: AppColors.field,
+      border: OutlineInputBorder(borderRadius: BorderRadius.circular(14)),
       enabledBorder: OutlineInputBorder(
-        borderSide: BorderSide(color: Colors.black26),
-        borderRadius: BorderRadius.circular(10),
+        borderSide: const BorderSide(color: AppColors.outline),
+        borderRadius: BorderRadius.circular(14),
       ),
       focusedBorder: OutlineInputBorder(
-        borderSide: BorderSide(color: AppColors.accent),
-        borderRadius: BorderRadius.circular(10),
+        borderSide: const BorderSide(color: AppColors.accent, width: 1.6),
+        borderRadius: BorderRadius.circular(14),
       ),
     ),
   );
 }
 
-/// Custom Elevated Button widget
-Widget customButton(String label, VoidCallback onPressed) {
+Widget customButton(String label, VoidCallback? onPressed) {
   return ElevatedButton(
     style: ElevatedButton.styleFrom(
       backgroundColor: AppColors.accent,
-      minimumSize: const Size.fromHeight(50),
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+      foregroundColor: Colors.white,
+      minimumSize: const Size.fromHeight(52),
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
     ),
     onPressed: onPressed,
-    child: Text(label, style: const TextStyle(fontSize: 16)),
+    child: Text(label, style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w700, color: Colors.white)),
   );
 }
 
-/// Custom AppBar widget (Reusable)
 class CustomAppBar extends StatelessWidget implements PreferredSizeWidget {
   final String title;
   final List<Widget>? actions;
@@ -69,35 +71,23 @@ class CustomAppBar extends StatelessWidget implements PreferredSizeWidget {
     super.key,
     required this.title,
     this.actions,
-  this.backgroundColor = Colors.blue, // Default color
+    this.backgroundColor = AppColors.primary,
   });
 
   @override
   Widget build(BuildContext context) {
     return AppBar(
-      title: Text(
-        title,
-        style: const TextStyle(
-          fontSize: 20,
-          fontWeight: FontWeight.bold,
-        ),
-      ),
+      title: Text(title),
       actions: actions,
       backgroundColor: backgroundColor,
-      elevation: 5, // Slight shadow
       centerTitle: true,
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(bottom: Radius.circular(30)),
-      ),
-      toolbarHeight: 70, // Increased height for a better visual appeal
     );
   }
 
   @override
-  Size get preferredSize => const Size.fromHeight(70); // Height of the AppBar
+  Size get preferredSize => const Size.fromHeight(kToolbarHeight);
 }
 
-/// Custom Footer Bar widget (Reusable)
 class CustomFooterBar extends StatelessWidget {
   final int selectedIndex;
   final Function(int) onItemTapped;
@@ -113,36 +103,15 @@ class CustomFooterBar extends StatelessWidget {
     return BottomNavigationBar(
       currentIndex: selectedIndex,
       onTap: onItemTapped,
-      selectedItemColor: AppColors.accent,
-      unselectedItemColor: Colors.grey,
-      showUnselectedLabels: true,
       items: const [
-        BottomNavigationBarItem(
-          icon: Icon(Icons.home),
-          label: 'Home',
-        ),
-        BottomNavigationBarItem(
-          icon: Icon(Icons.search),
-          label: 'Search',
-        ),
-        BottomNavigationBarItem(
-          icon: Icon(Icons.notifications),
-          label: 'Notifications',
-        ),
-        BottomNavigationBarItem(
-          icon: Icon(Icons.account_circle),
-          label: 'Profile',
-        ),
+        BottomNavigationBarItem(icon: Icon(Icons.home), label: 'Home'),
+        BottomNavigationBarItem(icon: Icon(Icons.search), label: 'Search'),
+        BottomNavigationBarItem(icon: Icon(Icons.notifications), label: 'Notifications'),
+        BottomNavigationBarItem(icon: Icon(Icons.account_circle), label: 'Profile'),
       ],
-  backgroundColor: Colors.white,
-      type: BottomNavigationBarType.fixed,
     );
   }
 }
-
-/// Custom Dropdown widget
-/// 
-/// import 'package:flutter/material.dart';
 
 class CustomDropdown extends StatelessWidget {
   final String label;
@@ -161,7 +130,7 @@ class CustomDropdown extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return DropdownButtonFormField<String>(
-      value: selectedValue,
+      initialValue: selectedValue,
       decoration: InputDecoration(labelText: label),
       items: items.map((court) {
         return DropdownMenuItem(
@@ -174,8 +143,6 @@ class CustomDropdown extends StatelessWidget {
   }
 }
 
-
-/// Reusable styled text input field
 class CustomTextInput extends StatelessWidget {
   final TextEditingController controller;
   final String label;
@@ -198,16 +165,10 @@ class CustomTextInput extends StatelessWidget {
       onEditingComplete: onEditingComplete,
       decoration: InputDecoration(
         labelText: label,
-        labelStyle: const TextStyle(color: Colors.black54),
         filled: true,
-        fillColor: AppColors.accent,
-        border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
-        focusedBorder: OutlineInputBorder(
-          borderSide: BorderSide(color: AppColors.accent),
-          borderRadius: BorderRadius.circular(12),
-        ),
+        fillColor: AppColors.field,
       ),
-      style: const TextStyle(color: Colors.black),
+      style: const TextStyle(color: AppColors.textPrimary),
     );
   }
 }

@@ -1,6 +1,12 @@
+import 'dart:convert';
+
 import 'package:etribunals/core/constants/app_colors.dart';
+import 'package:etribunals/core/constants/tribunal_sources.dart';
+import 'package:etribunals/core/widgets/bookmark_icon_button.dart';
+import 'package:etribunals/core/widgets/court_band.dart';
+import 'package:etribunals/core/widgets/in_app_document_screen.dart';
+import 'package:etribunals/data/model/bookmarked_case.dart';
 import 'package:flutter/material.dart';
-import 'package:url_launcher/url_launcher.dart';
 
 class CaseDetailsScreen extends StatelessWidget {
   final Map<String, dynamic> caseDetails;
@@ -20,9 +26,26 @@ class CaseDetailsScreen extends StatelessWidget {
     final List<dynamic> caseProceedingList = caseDetails["allproceedingdtls"] ?? [];
 
     return Scaffold(
-      appBar: AppBar(title: const Text("Full Case Details"),
+      appBar: AppBar(
+        title: const Text("Full Case Details"),
         backgroundColor: AppColors.primary,
         centerTitle: true,
+        actions: [
+          BookmarkIconButton(
+            caseItem: BookmarkedCase(
+              id: BookmarkedCase.makeId('NCLT', caseData["filing_no"]?.toString() ?? ''),
+              tribunal: 'NCLT',
+              filingNo: caseData["filing_no"]?.toString() ?? '',
+              caseNo: caseData["case_no"]?.toString() ?? '',
+              title: "${caseData["case_title1"] ?? ""} vs ${caseData["case_title2"] ?? ""}".trim(),
+              nextHearing: caseData["next_list_date"]?.toString(),
+              savedAt: DateTime.now().millisecondsSinceEpoch,
+              payloadKind: 'nclt_json',
+              payload: jsonEncode(caseDetails),
+              sourceUrl: TribunalSources.officialHome('NCLT'),
+            ),
+          ),
+        ],
       ),
       backgroundColor: AppColors.secondary,
       body: SingleChildScrollView(
@@ -31,6 +54,12 @@ class CaseDetailsScreen extends StatelessWidget {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
+              CourtBand(
+                title: (caseData['case_no'] ?? caseData['filing_no'] ?? 'NCLT case').toString(),
+                subtitle: '${caseData["case_title1"] ?? ""} vs ${caseData["case_title2"] ?? ""}'.trim(),
+                icon: Icons.folder_open,
+              ),
+              const SizedBox(height: 12),
               _buildAccordionContainer(_buildMainCaseAccordion(caseData,allproceedingdtlsData)),
               const SizedBox(height: 15),
              _buildAccordionContainer( _buildCurrentCaseDetailsAccordion(finalStatusData, allproceedingdtlsData)),
@@ -51,7 +80,7 @@ class CaseDetailsScreen extends StatelessWidget {
     return ExpansionTile(
       initiallyExpanded: true, // Open by default
       title: const Text("Case Details", style: TextStyle(fontWeight: FontWeight.bold)),
-      backgroundColor: AppColors.accent,
+      backgroundColor: AppColors.paper,
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
       children: [
         Card(
@@ -86,7 +115,7 @@ class CaseDetailsScreen extends StatelessWidget {
       // This accordion is initially expanded to show the current case details
       initiallyExpanded: false, // Open by default
       title: const Text("Current Case Details", style: TextStyle(fontWeight: FontWeight.bold)),
-      backgroundColor: AppColors.accent,
+      backgroundColor: AppColors.paper,
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
       children: [
         Card(
@@ -136,7 +165,7 @@ Widget _buildPartyDetailsAccordion(Map<String, dynamic> caseData, List<dynamic> 
   return ExpansionTile(
     initiallyExpanded: false,
     title: const Text("Party Details", style: TextStyle(fontWeight: FontWeight.bold)),
-    backgroundColor: AppColors.accent,
+    backgroundColor: AppColors.tile,
     shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
     children: partyList.asMap().entries.map((entry) {
       int index = entry.key + 1; // Start numbering from 1
@@ -169,7 +198,7 @@ Widget _buildApplicationDetailsAccordion(Map<String, dynamic> caseData, List<dyn
   return ExpansionTile(
     initiallyExpanded: false,
     title: const Text("Application Details", style: TextStyle(fontWeight: FontWeight.bold)),
-    backgroundColor: AppColors.accent,
+    backgroundColor: AppColors.tile,
     shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
     children: applicationList.asMap().entries.map((entry) {
       int index = entry.key + 1; // Start numbering from 1
@@ -220,7 +249,7 @@ Widget _buildCaseProceedingDetailsAccordion(Map<String, dynamic> caseData, List<
   return ExpansionTile(
     initiallyExpanded: false,
     title: const Text("Case Proceeding Details", style: TextStyle(fontWeight: FontWeight.bold)),
-    backgroundColor: AppColors.accent,
+    backgroundColor: AppColors.tile,
     shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
     children: caseProceedingList.asMap().entries.map((entry) {
       int index = entry.key + 1; // Start numbering from 1
@@ -274,7 +303,7 @@ Widget _buildCaseProceedingDetailsAccordion(Map<String, dynamic> caseData, List<
               value,
               maxLines: 2,
               overflow: TextOverflow.ellipsis,
-              style: const TextStyle(fontSize: 16, color: AppColors.secondary),
+              style: const TextStyle(fontSize: 16, color: AppColors.textPrimary),
             ),
           ),
         ],
@@ -304,7 +333,7 @@ Widget _buildCaseProceedingDetailsAccordion(Map<String, dynamic> caseData, List<
               const SizedBox(width: 8), // Spacing between icon and text
               Text(isYes ? value! : "NO", overflow: TextOverflow.ellipsis,
                 style: TextStyle(
-                  color: isYes ? AppColors.secondary : Colors.red, // Match text color with icon
+                  color: isYes ? AppColors.ink : Colors.red, // Match text color with icon
                   fontSize: 16,
                 ),
               ),
@@ -318,7 +347,7 @@ Widget _buildCaseProceedingDetailsAccordion(Map<String, dynamic> caseData, List<
 
 Widget _buildOrderDownloadRow(String title, String? path) {
   final String pdfUrl = path != null && path.isNotEmpty
-      ? "https://efiling.nclt.gov.in/ordersview.drt?path=$path"
+      ? TribunalSources.ncltOrderPdf(path)
       : "";
 
   return Padding(
@@ -333,15 +362,15 @@ Widget _buildOrderDownloadRow(String title, String? path) {
         Expanded(
           flex: 3,
           child: path != null && path.isNotEmpty
-              ? ElevatedButton.icon(
-                  onPressed: () async {
-                      await launchUrl(Uri.parse(pdfUrl), mode: LaunchMode.externalApplication);
-                  },
-                  icon: const Icon(Icons.picture_as_pdf, color: Colors.white),
-                  label: const Text("View Order"),
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: Colors.blue, // Customize button color
-                    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+              ? Builder(
+                  builder: (context) => ElevatedButton.icon(
+                    onPressed: () => InAppDocumentScreen.open(context, pdfUrl, title: 'Order'),
+                    icon: const Icon(Icons.picture_as_pdf, color: Colors.white),
+                    label: const Text("View Order"),
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: Colors.blue,
+                      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                    ),
                   ),
                 )
               : const Text("N/A"), // Display N/A if no path is available

@@ -1,18 +1,28 @@
 import 'package:etribunals/core/constants/app_colors.dart';
+import 'package:etribunals/core/constants/tribunal_sources.dart';
 import 'package:etribunals/core/utils/tables_extracter.dart';
+import 'package:etribunals/core/widgets/bookmark_icon_button.dart';
 import 'package:etribunals/core/widgets/common_widgets.dart';
+import 'package:etribunals/core/widgets/court_band.dart';
+import 'package:etribunals/core/widgets/in_app_document_screen.dart';
+import 'package:etribunals/data/model/bookmarked_case.dart';
 import 'package:flutter/material.dart';
 import 'package:html/parser.dart' as html_parser;
-import 'package:url_launcher/url_launcher.dart';
 
 class CaseDetailsScreen extends StatelessWidget {
   final String filingNo;
   final String responseData;
+  final String tribunal;
+  final String caseTitle;
+  final String caseNo;
 
   const CaseDetailsScreen({
     super.key,
     required this.filingNo,
     required this.responseData,
+    this.tribunal = 'NCLAT',
+    this.caseTitle = '',
+    this.caseNo = '',
   });
 
   @override
@@ -42,25 +52,52 @@ class CaseDetailsScreen extends StatelessWidget {
       appBar: AppBar(
         title: customText('Case Details - $filingNo'),
         backgroundColor: AppColors.primary,
+        actions: [
+          BookmarkIconButton(
+            caseItem: BookmarkedCase(
+              id: BookmarkedCase.makeId(tribunal, filingNo),
+              tribunal: tribunal,
+              filingNo: filingNo,
+              caseNo: caseNo,
+              title: caseTitle.isEmpty ? filingNo : caseTitle,
+              savedAt: DateTime.now().millisecondsSinceEpoch,
+              payloadKind: 'nclat_html',
+              payload: responseData,
+              sourceUrl: TribunalSources.officialHome(tribunal),
+            ),
+          ),
+        ],
       ),
       backgroundColor: AppColors.secondary,
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(16),
         child: Column(
-          children: caseJson.entries.map((entry) {
+          children: [
+            CourtBand(
+              title: caseNo.isNotEmpty ? caseNo : filingNo,
+              subtitle: caseTitle.isEmpty ? 'Official NCLAT record' : caseTitle,
+              icon: Icons.folder_open,
+            ),
+            const SizedBox(height: 12),
+            ...caseJson.entries.map((entry) {
             return Card(
-              color: AppColors.accent,
+              color: AppColors.paper,
               margin: const EdgeInsets.symmetric(vertical: 5),
-              elevation: 4,
+              elevation: 0,
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(10),
+                side: const BorderSide(color: Color(0x3314384A)),
+              ),
               child: ExpansionTile(
+                initiallyExpanded: entry.key == 'Case Details',
                 title: Text(
                   entry.key,
-                  style: const TextStyle(fontWeight: FontWeight.bold),
+                  style: const TextStyle(fontWeight: FontWeight.bold, color: AppColors.ink),
                 ),
-                backgroundColor: AppColors.accent,
+                backgroundColor: AppColors.paper,
                 children: [
                   Container(
-                    color: Colors.white,
+                    color: AppColors.paper,
                     width: double.infinity,
                     padding: const EdgeInsets.all(8),
                     child: entry.value is Map<String, List<Map<String, String>>>
@@ -74,7 +111,7 @@ class CaseDetailsScreen extends StatelessWidget {
                         : entry.value is Map<String, String>
                             ? buildKeyValueDataTable(entry.value)
                             : entry.value is List
-                                ? buildDataTable(entry.value)
+                                ? buildDataTable(context, entry.value)
                                 : const Text(
                                     "No data available.",
                                     style: TextStyle(color: Colors.black),
@@ -83,7 +120,8 @@ class CaseDetailsScreen extends StatelessWidget {
                 ],
               ),
             );
-          }).toList(),
+          }),
+          ],
         ),
       ),
     );
@@ -189,7 +227,7 @@ class CaseDetailsScreen extends StatelessWidget {
     );
   }
 
-  Widget buildDataTable(List<Map<String, dynamic>> tableData) {
+  Widget buildDataTable(BuildContext context, List<Map<String, dynamic>> tableData) {
     if (tableData.isEmpty) {
       return const Text(
         "No data available.",
@@ -223,9 +261,8 @@ class CaseDetailsScreen extends StatelessWidget {
 
                 return DataCell(
                   InkWell(
-                    onTap: () async {
-                      final uri = Uri.parse(url);
-                     await launchUrl(uri, mode: LaunchMode.externalApplication);
+                    onTap: () {
+                      InAppDocumentScreen.open(context, url, title: 'Order');
                     },
                     child: Row(
                       children: [

@@ -40,7 +40,7 @@ class OrdersDetailsScreen extends StatelessWidget {
         child: Column(
           children: caseJson.entries.map((entry) {
             return Card(
-              color: AppColors.accent,
+              color: AppColors.card,
               margin: const EdgeInsets.symmetric(vertical: 5),
               elevation: 4,
               child: ExpansionTile(

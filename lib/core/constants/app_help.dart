@@ -28,7 +28,7 @@ AI Summarize sends the open PDF (or its extracted text) to Google Gemini so the 
 
   static const playUrl = 'https://play.google.com/store/apps/details?id=com.zrh.etribunals.etribunals';
 
-  static const privacyUrl = 'https://samadkhan259.github.io/etribunals/privacy.html';
+  static const privacyUrl = 'https://samkhan3793.github.io/etribunals/privacy.html';
 
   static const whatsNew = '''
 • AI Summarize on order/judgement PDFs — held points, directions, then a short follow-up box.

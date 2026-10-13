@@ -1,5 +1,12 @@
+﻿// ignore_for_file: file_names
+
+import 'dart:async';
 import 'dart:convert';
 
+import 'package:etribunals/core/constants/app_colors.dart';
+import 'package:etribunals/core/constants/tribunal_sources.dart';
+import 'package:etribunals/core/widgets/court_band.dart';
+import 'package:etribunals/core/widgets/source_footer.dart';
 import 'package:etribunals/presentation/screens/tribunals/upreat/upreat-order-judgement/nclt_order_judgement_search_results_screen.dart';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
@@ -8,7 +15,7 @@ class SearchUpreatOrderJudgementScreen extends StatefulWidget {
   const SearchUpreatOrderJudgementScreen({super.key});
 
   @override
-  _SearchUpreatOrderJudgementScreenState createState() =>
+  State<SearchUpreatOrderJudgementScreen> createState() =>
       _SearchUpreatOrderJudgementScreenState();
 }
 
@@ -16,21 +23,14 @@ class _SearchUpreatOrderJudgementScreenState
     extends State<SearchUpreatOrderJudgementScreen> {
   final TextEditingController _filingNumberController = TextEditingController();
   final TextEditingController _caseNumberController = TextEditingController();
-  String? _selectedSearchType = 'Select Search Type';
-  String? _selectedBench = '0';
-  String? _selectedCaseType = '0';
-  String? _selectedCaseYear = '0';
+  String? _selectedSearchType = 'filingnumber';
+  String? _selectedBench = '1';
+  String? _selectedCaseType = '1';
+  String? _selectedCaseYear;
   bool _isLoading = false;
 
-  final List<String> _searchTypes = [
-    'Select Search Type',
-    'filingnumber',
-    'casenumber'
-  ];
-
   final List<Map<String, String>> _benches = [
-    {'value': '0', 'label': 'Select Zonal Bench'},
-    {'value': '1', 'label': 'UPREAT LUCKNOW'}
+    {'value': '1', 'label': 'UPREAT Lucknow'}
   ];
 
   final List<Map<String, String>> _caseTypes = [
@@ -40,21 +40,71 @@ class _SearchUpreatOrderJudgementScreenState
     
   ];
 
-  final List<String> _caseYears = List.generate(
-    15,
-    (index) => (2025 - index).toString(),
-  );
+  late final List<String> _caseYears;
+
+  @override
+  void initState() {
+    super.initState();
+    final currentYear = DateTime.now().year;
+    _caseYears = List.generate(15, (index) => (currentYear - index).toString());
+    _selectedCaseYear = _caseYears.first;
+  }
+
+  @override
+  void dispose() {
+    _filingNumberController.dispose();
+    _caseNumberController.dispose();
+    super.dispose();
+  }
 
   Future<void> _submitForm() async {
+    final selectedSearchType = _selectedSearchType;
+    if (selectedSearchType == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text("Please select a search type")),
+      );
+      return;
+    }
+
+    FocusScope.of(context).unfocus(); // Dismiss keyboard
+
+    if (selectedSearchType == 'filingnumber') {
+      if (_filingNumberController.text.trim().isEmpty) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text("Please enter a filing number")),
+        );
+        return;
+      }
+    } else if (selectedSearchType == 'casenumber') {
+      if ((_selectedBench ?? '1') == '0') {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text("Please select a bench")),
+        );
+        return;
+      }
+      if ((_selectedCaseType ?? '0') == '0') {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text("Please select a case type")),
+        );
+        return;
+      }
+      if (_caseNumberController.text.trim().isEmpty) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text("Please enter a case number")),
+        );
+        return;
+      }
+    }
+
     setState(() => _isLoading = true); // Show loader
 
     final Map<String, dynamic> payload = {
-      "wayofselection": _selectedSearchType,
+      "wayofselection": selectedSearchType,
       "i_bench_id": "0",
       "filing_no": _filingNumberController.text,
-      "i_bench_id_case_no": _selectedBench,
-      "i_case_type_caseno": _selectedCaseType,
-      "i_case_year_caseno": _selectedCaseYear,
+      "i_bench_id_case_no": _selectedBench ?? "0",
+      "i_case_type_caseno": _selectedCaseType ?? "0",
+      "i_case_year_caseno": _selectedCaseYear ?? "",
       "case_no": _caseNumberController.text,
       "i_party_search": "E",
       "i_bench_id_party": "0",
@@ -70,31 +120,56 @@ class _SearchUpreatOrderJudgementScreenState
     };
 
     try {
-      final response = await http.post(
-        Uri.parse("https://www.efilingreat.up.gov.in/caseHistoryoptional.in"),
-        headers: {"Content-Type": "application/json"},
+      final response = await http
+          .post(
+        Uri.parse("https://efilingreat.up.gov.in/caseHistoryoptional.in"),
+        headers: {
+          "Content-Type": "application/json",
+          "Accept": "application/json",
+        },
         body: jsonEncode(payload),
-      );
+      )
+          .timeout(const Duration(seconds: 25));
 
       if (response.statusCode == 200) {
-        final Map<String, dynamic> responseData = jsonDecode(response.body);
+        Map<String, dynamic> responseData;
+        try {
+          final dynamic decoded = jsonDecode(response.body);
+          if (decoded is! Map<String, dynamic>) {
+            throw const FormatException("Unexpected response format");
+          }
+          responseData = decoded;
+        } on FormatException {
+          final snippet =
+              response.body.length > 200 ? response.body.substring(0, 200) : response.body;
+          throw FormatException("Unexpected response from server: $snippet");
+        }
+        if (!mounted) return;
         setState(() => _isLoading = false); // Hide loader
 
         Navigator.push(
           context,
           MaterialPageRoute(
-            builder:
-                (context) => UpreatOrderJudgementSearcResultsScreen(responseData), // Pass data
+            builder: (context) => UpreatOrderJudgementSearchResultsScreen(responseData), // Pass data
           ),
         );
       } else {
-        throw Exception("Failed to fetch data: ${response.statusCode}");
+        final snippet =
+            response.body.length > 200 ? response.body.substring(0, 200) : response.body;
+        throw Exception("Failed to fetch data: ${response.statusCode} ($snippet)");
       }
-    } catch (e) {
+    } on TimeoutException {
+      if (!mounted) return;
       setState(() => _isLoading = false);
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(SnackBar(content: Text("Error fetching data: $e")));
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text("Request timed out. Please try again.")),
+      );
+    } catch (e) {
+      if (!mounted) return;
+      setState(() => _isLoading = false);
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text("Error fetching data: $e")),
+      );
     }
   }
 
@@ -105,104 +180,88 @@ class _SearchUpreatOrderJudgementScreenState
     required ValueChanged<T?> onChanged,
   }) {
     return DropdownButtonFormField<T>(
-      value: value,
+      isExpanded: true,
+      initialValue: value,
       items: items,
       onChanged: onChanged,
-      decoration: InputDecoration(labelText: label, isDense: true),
-      dropdownColor: Theme.of(context).cardColor,
-      isExpanded: true,
-      menuMaxHeight: MediaQuery.of(context).size.height * 0.4,
+      decoration: InputDecoration(labelText: label),
     );
   }
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
     return Scaffold(
-      appBar: AppBar(
-        title: const Text("Search Upreat Order/ Judgement"),
-      ),
-      body: Padding(
-        padding: const EdgeInsets.all(16.0),
-        child:
-            _isLoading
-                ? const Center(child: CircularProgressIndicator())
-                : Column(
-                  children: [
-                    _buildDropdown<String>(
-                      value: _selectedSearchType,
-                      label: "Select Search Type",
-                      onChanged: (value) => setState(() => _selectedSearchType = value),
-                      items: _searchTypes.map((type) {
-                        return DropdownMenuItem(
-                          value: type,
-                          child: Text(type.toUpperCase()),
-                        );
-                      }).toList(),
-                    ),
-                    const SizedBox(height: 20),
-                    if (_selectedSearchType == 'filingnumber')
-                      TextField(
-                        controller: _filingNumberController,
-                        decoration: const InputDecoration(
-                          labelText: "Enter Filing Number",
-                          border: OutlineInputBorder(
-                            borderRadius: BorderRadius.all(
-                              Radius.circular(8.0),
-                            ),
-                          ),
-                        ),
-                      ),
-                    const SizedBox(height: 20),
-                    if (_selectedSearchType == 'casenumber') ...[
-                      _buildDropdown<String>(
-                        value: _selectedBench,
-                        label: "Select Bench",
-                        onChanged: (value) => setState(() => _selectedBench = value),
-                        items: _benches.map((bench) {
-                          return DropdownMenuItem(
-                            value: bench['value'],
-                            child: Text(bench['label']!),
-                          );
-                        }).toList(),
-                      ),
-                      const SizedBox(height: 20),
-                      _buildDropdown<String>(
-                        value: _selectedCaseType,
-                        label: "Select Case Type",
-                        onChanged: (value) => setState(() => _selectedCaseType = value),
-                        items: _caseTypes.map((caseType) {
-                          return DropdownMenuItem(
-                            value: caseType['value'],
-                            child: Text(caseType['label']!),
-                          );
-                        }).toList(),
-                      ),
-                      const SizedBox(height: 20),
-                      TextField(
-                        controller: _caseNumberController,
-                        decoration: const InputDecoration(labelText: "Enter Case Number"),
-                      ),
-                      const SizedBox(height: 20),
-                      _buildDropdown<String>(
-                        value: _caseYears.contains(_selectedCaseYear) ? _selectedCaseYear : _caseYears.first,
-                        label: "Select Case Year",
-                        onChanged: (value) => setState(() => _selectedCaseYear = value),
-                        items: _caseYears.map((year) {
-                          return DropdownMenuItem(value: year, child: Text(year));
-                        }).toList(),
-                      ),
-                    ],
-                    const SizedBox(height: 20),
-                    SizedBox(
-                      width: double.infinity,
-                      child: ElevatedButton(
-                        onPressed: _submitForm,
-                        child: const Text("Search Case Status"),
-                      ),
-                    )
-                  ],
-                ),
+      backgroundColor: AppColors.secondary,
+      appBar: AppBar(title: const Text('UPREAT judgements / orders')),
+      body: ListView(
+        padding: const EdgeInsets.all(16),
+        children: [
+          const CourtBand(
+            title: 'Search official orders',
+            subtitle: 'eFiling REAT Lucknow  Â·  then open PDFs in-app',
+            icon: Icons.gavel,
+          ),
+          const SizedBox(height: 14),
+          _buildDropdown<String>(
+            value: _selectedSearchType,
+            label: 'Search by',
+            onChanged: (value) {
+              setState(() {
+                _selectedSearchType = value;
+                _filingNumberController.clear();
+                _caseNumberController.clear();
+              });
+            },
+            items: const [
+              DropdownMenuItem(value: 'filingnumber', child: Text('Filing / diary no.')),
+              DropdownMenuItem(value: 'casenumber', child: Text('Case number')),
+            ],
+          ),
+          const SizedBox(height: 12),
+          if (_selectedSearchType == 'filingnumber')
+            TextField(
+              controller: _filingNumberController,
+              decoration: const InputDecoration(labelText: 'Filing number'),
+            ),
+          if (_selectedSearchType == 'casenumber') ...[
+            _buildDropdown<String>(
+              value: _selectedBench,
+              label: 'Bench',
+              onChanged: (value) => setState(() => _selectedBench = value),
+              items: _benches.map((b) => DropdownMenuItem(value: b['value'], child: Text(b['label']!))).toList(),
+            ),
+            const SizedBox(height: 12),
+            _buildDropdown<String>(
+              value: _selectedCaseType,
+              label: 'Case type',
+              onChanged: (value) => setState(() => _selectedCaseType = value),
+              items: _caseTypes.map((c) => DropdownMenuItem(value: c['value'], child: Text(c['label']!))).toList(),
+            ),
+            const SizedBox(height: 12),
+            TextField(
+              controller: _caseNumberController,
+              decoration: const InputDecoration(labelText: 'Case number (serial only)'),
+            ),
+            const SizedBox(height: 12),
+            _buildDropdown<String>(
+              value: _selectedCaseYear,
+              label: 'Year',
+              onChanged: (value) => setState(() => _selectedCaseYear = value),
+              items: _caseYears.map((y) => DropdownMenuItem(value: y, child: Text(y))).toList(),
+            ),
+          ],
+          const SizedBox(height: 18),
+          SizedBox(
+            height: 50,
+            child: ElevatedButton(
+              onPressed: _isLoading ? null : _submitForm,
+              child: _isLoading
+                  ? const SizedBox(width: 22, height: 22, child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white))
+                  : const Text('Search'),
+            ),
+          ),
+          SourceFooter(tribunal: 'UPREAT', officialUrl: TribunalSources.officialHome('UPREAT')),
+        ],
       ),
     );
   }

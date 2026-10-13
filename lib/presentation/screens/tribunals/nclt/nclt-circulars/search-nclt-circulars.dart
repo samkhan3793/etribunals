@@ -85,7 +85,7 @@ class _SearchNcltCircularsScreenState extends State<SearchNcltCircularsScreen> {
       'captcha_response': _captchaController.text,
     };
 
-    final uri = Uri.https('nclt.gov.in', '/circularss', queryParams);
+    final uri = Uri.https('nclt.gov.in', '/circulars', queryParams);
     final response = await http.get(uri);
 
     if (response.statusCode == 200) {
